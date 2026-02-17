@@ -7,7 +7,7 @@
 
 <div class="card" style="max-width: 600px; margin: 0 auto;">
     <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-        <p><strong>Customer:</strong> {{ sale.customer_name|default:"Walk-in" }}</p>
+        <p><strong>Customer:</strong> {{ sale.customer_name|default:"-" }}</p>
         <p><strong>Total Amount:</strong> ₦{{ sale.total|floatformat:2 }}</p>
         <p><strong>Amount Paid:</strong> ₦{{ sale.amount_paid|floatformat:2 }}</p>
         <p><strong style="color: #dc3545;">Outstanding Balance:</strong> 

@@ -142,6 +142,11 @@ def process_sale(request):
             if not data.get('items'):
                 return JsonResponse({'success': False, 'error': 'No items in cart'})
             
+            # Validate customer name (required)
+            customer_name = data.get('customer_name', '').strip()
+            if not customer_name:
+                return JsonResponse({'success': False, 'error': 'Customer name is required'})
+            
             # Calculate with Decimal for precision
             subtotal = Decimal('0')
             for item in data['items']:
@@ -197,8 +202,8 @@ def process_sale(request):
             sale = Sale.objects.create(
                 invoice_number=invoice_number,
                 staff=request.user,
-                customer_name=data.get('customer_name', ''),
-                customer_phone=data.get('customer_phone', ''),
+                customer_name=customer_name,
+                customer_phone=data.get('customer_phone', '').strip(),  # Optional
                 subtotal=subtotal,
                 discount=sale_discount,
                 total=total,
@@ -295,7 +300,6 @@ def process_sale(request):
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
 
 @login_required
 def view_receipt(request, sale_id):

@@ -103,7 +103,7 @@
                 <div class="detail-label">Customer</div>
                 <div class="detail-value">
                     {% if refund.sale %}
-                        {{ refund.sale.customer_name|default:"Walk-in Customer" }}
+                        {{ refund.sale.customer_name|default:"-" }}
                     {% else %}
                         {{ refund.refund_request.customer_name|default:"Unknown Customer" }}
                     {% endif %}

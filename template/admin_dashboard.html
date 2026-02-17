@@ -437,7 +437,7 @@
                 {% for sale in recent_sales %}
                 <tr>
                     <td><strong>{{ sale.invoice_number }}</strong></td>
-                    <td>{{ sale.customer_name|default:"Walk-in" }}</td>
+                    <td>{{ sale.customer_name|default:"-" }}</td>
                     <td>{{ sale.staff.get_full_name|default:sale.staff.username }}</td>
                     <td>₦{{ sale.total|floatformat:2 }}</td>
                     <td>

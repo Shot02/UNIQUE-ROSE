@@ -169,8 +169,8 @@
     <div class="receipt-info">
         <div class="info-section">
             <h3>Customer Information</h3>
-            <p><strong>Name:</strong> {{ sale.customer_name|default:"Walk-in Customer" }}</p>
-            <p><strong>Phone:</strong> {{ sale.customer_phone|default:"Not Provided" }}</p>
+            <p><strong>Name:</strong> {{ sale.customer_name|default:"-" }}</p>
+            <p><strong>Phone:</strong> {{ sale.customer_phone|default:"-" }}</p>
             <p><strong>Payment Status:</strong> 
                 <span class="payment-status status-{{ sale.payment_status }}">
                     {{ sale.payment_status|title }}

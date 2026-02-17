@@ -291,7 +291,7 @@
                 <tr>
                     <td><strong>{{ sale.invoice_number }}</strong></td>
                     <td>{{ sale.created_at|date:"M d, Y H:i" }}</td>
-                    <td>{{ sale.customer_name|default:"Walk-in" }}</td>
+                    <td>{{ sale.customer_name|default:"-" }}</td>
                     <td>{{ sale.customer_phone|default:"-" }}</td>
                     <td>{{ sale.staff.username }}</td>
                     <td>₦{{ sale.subtotal|floatformat:2 }}</td>

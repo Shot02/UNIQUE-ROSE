@@ -364,17 +364,18 @@
             </div>
             
             <!-- Customer Information (Hidden for full payment by default) -->
-            <div id="customerInfoSection" style="display: none;">
+            <!-- Customer Information - Now Always Visible -->
+            <div id="customerInfoSection" style="display: block;">
                 <div class="form-group">
                     <label class="required-field">Customer Name *</label>
                     <input type="text" id="customerName" class="form-control" 
-                           placeholder="Enter customer name">
+                        placeholder="Enter customer name" required>
                 </div>
                 
                 <div class="form-group">
-                    <label class="required-field">Customer Phone *</label>
+                    <label>Customer Phone (Optional)</label>
                     <input type="tel" id="customerPhone" class="form-control" 
-                           placeholder="Enter phone number">
+                        placeholder="Enter phone number (optional)">
                 </div>
             </div>
             
@@ -740,24 +741,21 @@ function selectPaymentType(type) {
         targetOption.classList.add('active');
     }
     
-    const customerInfoSection = document.getElementById('customerInfoSection');
+    // Customer info is always visible now
+    const amountPaidInput = document.getElementById('amountPaid');
     
     if (type === 'installment') {
-        customerInfoSection.style.display = 'block';
-        const amountPaidInput = document.getElementById('amountPaid');
         const currentAmount = parseFloat(amountPaidInput.value) || 0;
         if (currentAmount < 0) {
             amountPaidInput.value = '0';
         }
-        validateAmount();
     } else {
-        customerInfoSection.style.display = 'none';
         if (cart.length > 0) {
             const grandTotal = calculateGrandTotal();
-            document.getElementById('amountPaid').value = grandTotal.toFixed(2);
-            validateAmount();
+            amountPaidInput.value = grandTotal.toFixed(2);
         }
     }
+    validateAmount();
 }
 
 function selectPaymentMethod(method) {
@@ -865,16 +863,24 @@ async function saveCart() {
     }
 }
 
-// ========== PROCESS SALE FUNCTION (WITH SAVED CART DELETION) ==========
+// ========== PROCESS SALE FUNCTION ==========
 async function processSale() {
     if (cart.length === 0) {
         showModal('Empty Cart', 'Please add items to cart before processing sale.', 'warning');
         return;
     }
     
-    const paymentType = document.querySelector('.payment-type-option.active').textContent.trim().toLowerCase().includes('full') ? 'full' : 'installment';
     const customerName = document.getElementById('customerName').value.trim();
-    const customerPhone = document.getElementById('customerPhone').value.trim();
+    
+    // Customer name is ALWAYS required
+    if (!customerName) {
+        showModal('Customer Name Required', 'Please enter customer name.', 'warning');
+        document.getElementById('customerName').focus();
+        return;
+    }
+    
+    const paymentType = document.querySelector('.payment-type-option.active').textContent.trim().toLowerCase().includes('full') ? 'full' : 'installment';
+    const customerPhone = document.getElementById('customerPhone').value.trim(); // Optional
     const amountPaid = parseFloat(document.getElementById('amountPaid').value) || 0;
     const paymentMethod = document.querySelector('.payment-method-option.active').textContent.trim().toLowerCase();
     const grandTotal = calculateGrandTotal();
@@ -894,20 +900,8 @@ async function processSale() {
         console.error('Error parsing saved cart data:', e);
     }
     
-    // Validation
+    // Validation for installment payments
     if (paymentType === 'installment') {
-        if (!customerName) {
-            showModal('Customer Name Required', 'Please enter customer name for installment payment.', 'warning');
-            document.getElementById('customerName').focus();
-            return;
-        }
-        
-        if (!customerPhone) {
-            showModal('Customer Phone Required', 'Please enter customer phone for installment payment.', 'warning');
-            document.getElementById('customerPhone').focus();
-            return;
-        }
-        
         if (amountPaid < 0) {
             showModal('Invalid Amount', 'Amount paid cannot be negative.', 'error');
             document.getElementById('amountPaid').focus();
@@ -920,6 +914,7 @@ async function processSale() {
             return;
         }
     } else {
+        // For full payment, automatically set amount paid to grand total
         if (amountPaid === 0 && cart.length > 0) {
             document.getElementById('amountPaid').value = grandTotal.toFixed(2);
         }
@@ -936,9 +931,6 @@ async function processSale() {
         showModal('Invalid Amount', 'Amount paid cannot exceed grand total.', 'error');
         return;
     }
-    
-    const finalCustomerName = paymentType === 'installment' ? customerName : (customerName || 'Walk-in Customer');
-    const finalCustomerPhone = paymentType === 'installment' ? customerPhone : (customerPhone || '');
     
     const items = cart.map(item => ({
         product_id: item.product_id,
@@ -957,8 +949,8 @@ async function processSale() {
             },
             body: JSON.stringify({
                 items: items,
-                customer_name: finalCustomerName,
-                customer_phone: finalCustomerPhone,
+                customer_name: customerName,  // Required
+                customer_phone: customerPhone, // Optional
                 amount_paid: finalAmountPaid,
                 payment_method: paymentMethod,
                 payment_type: paymentType,
@@ -987,7 +979,9 @@ async function processSale() {
             
             window.location.href = `/receipt/${result.sale_id}/`;
             
-        } 
+        } else {
+            showModal('Error', result.error || 'Failed to process sale', 'error');
+        }
     } catch (error) {
         console.error('Process sale error:', error);
         showModal('Network Error', 'Error processing sale. Please check your connection and try again.', 'error');
