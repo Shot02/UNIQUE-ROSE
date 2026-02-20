@@ -378,8 +378,6 @@
     </div>
 </div>
 
-
-
 <!-- Total Revenue Card -->
 <div class="revenue-card">
     <h2>Total Revenue ({{ date_filter|title }})</h2>
@@ -387,6 +385,109 @@
     <div style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">
         Actual payments received
     </div>
+</div>
+
+<!-- Profit Analysis Section -->
+<div class="profit-section" style="margin-bottom: 2rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+        <!-- Total Profit Card -->
+        <div class="stat-card" style="border-left-color: #10b981;">
+            <h3>Total Profit</h3>
+            <div class="value" style="color: #10b981;">₦{{ total_profit|floatformat:2 }}</div>
+            <div class="subtext">Net profit for this period</div>
+        </div>
+        
+        <!-- Revenue Card -->
+        <div class="stat-card" style="border-left-color: #3b82f6;">
+            <h3>Total Revenue</h3>
+            <div class="value" style="color: #3b82f6;">₦{{ total_revenue_from_sales|floatformat:2 }}</div>
+            <div class="subtext">Sales revenue before costs</div>
+        </div>
+        
+        <!-- Cost of Goods Card -->
+        <div class="stat-card" style="border-left-color: #ef4444;">
+            <h3>Cost of Goods</h3>
+            <div class="value" style="color: #ef4444;">₦{{ total_cost_of_goods|floatformat:2 }}</div>
+            <div class="subtext">Total product costs</div>
+        </div>
+        
+        <!-- Profit Margin Card -->
+        <div class="stat-card" style="border-left-color: #8b5cf6;">
+            <h3>Profit Margin</h3>
+            <div class="value" style="color: #8b5cf6;">{{ profit_margin|floatformat:1 }}%</div>
+            <div class="subtext">Margin percentage</div>
+        </div>
+    </div>
+    
+    <!-- Profit by Payment Method -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+            <h3>Profit by Payment Method</h3>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 1rem;">
+            <div style="text-align: center;">
+                <h4 style="color: #666; margin-bottom: 0.5rem;">Cash</h4>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #10b981;">
+                    ₦{{ profit_by_payment.cash|floatformat:2 }}
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <h4 style="color: #666; margin-bottom: 0.5rem;">Transfer</h4>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #3b82f6;">
+                    ₦{{ profit_by_payment.transfer|floatformat:2 }}
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <h4 style="color: #666; margin-bottom: 0.5rem;">Card</h4>
+                <div style="font-size: 1.5rem; font-weight: bold; color: #8b5cf6;">
+                    ₦{{ profit_by_payment.card|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Profitable Products -->
+    {% if top_profitable_products %}
+    <div class="card">
+        <div class="card-header">
+            <h3>Top 5 Most Profitable Products</h3>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Quantity Sold</th>
+                        <th>Revenue</th>
+                        <th>Cost</th>
+                        <th>Profit</th>
+                        <th>Margin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in top_profitable_products %}
+                    <tr>
+                        <td><strong>{{ product.name }}</strong></td>
+                        <td><code>{{ product.sku }}</code></td>
+                        <td>{{ product.quantity_sold }}</td>
+                        <td>₦{{ product.revenue|floatformat:2 }}</td>
+                        <td>₦{{ product.cost|floatformat:2 }}</td>
+                        <td style="color: #10b981; font-weight: bold;">₦{{ product.profit|floatformat:2 }}</td>
+                        <td>
+                            {% if product.revenue > 0 %}
+                                {% widthratio product.profit product.revenue 100 %}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Recent Sales Section -->
@@ -713,7 +814,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadRefundStats();
 });
 
-
 document.addEventListener('DOMContentLoaded', function() {
     // Get the unread count from data attribute
     const unreadCount = parseInt(document.body.dataset.unreadDashboardCount || '0');
@@ -731,6 +831,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
 // Initialize search inputs
 document.addEventListener('DOMContentLoaded', function() {
     const salesSearchInput = document.getElementById('salesSearchInput');
@@ -761,6 +862,176 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+});
+
+// Profit Chart Function
+async function loadProfitChart() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateFilter = urlParams.get('date_filter') || '{{ date_filter }}';
+    const customStart = urlParams.get('custom_start') || '{{ start_date|date:"Y-m-d" }}';
+    const customEnd = urlParams.get('custom_end') || '{{ end_date|date:"Y-m-d" }}';
+    
+    try {
+        const response = await fetch(`/api/profit-stats/?date_filter=${dateFilter}&custom_start=${customStart}&custom_end=${customEnd}`);
+        const data = await response.json();
+        
+        if (data.success && data.daily_profit && data.daily_profit.length > 0) {
+            createProfitChart(data.daily_profit);
+        }
+    } catch (error) {
+        console.error('Error loading profit chart:', error);
+    }
+}
+
+function createProfitChart(dailyData) {
+    // Check if Chart.js is available
+    if (typeof Chart === 'undefined') {
+        // Load Chart.js if not available
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        script.onload = function() {
+            renderChart(dailyData);
+        };
+        document.head.appendChild(script);
+    } else {
+        renderChart(dailyData);
+    }
+}
+
+function renderChart(dailyData) {
+    // Create canvas for chart
+    const chartContainer = document.createElement('div');
+    chartContainer.className = 'card';
+    chartContainer.style.marginBottom = '2rem';
+    
+    chartContainer.innerHTML = `
+        <div class="card-header">
+            <h3>Daily Profit Trend</h3>
+        </div>
+        <div style="padding: 1.5rem;">
+            <canvas id="profitChart" style="width: 100%; height: 300px;"></canvas>
+        </div>
+    `;
+    
+    // Insert after profit stats
+    const profitSection = document.querySelector('.profit-section');
+    profitSection.parentNode.insertBefore(chartContainer, profitSection.nextSibling);
+    
+    const ctx = document.getElementById('profitChart').getContext('2d');
+    
+    const labels = dailyData.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+    
+    const revenueData = dailyData.map(d => d.revenue);
+    const costData = dailyData.map(d => d.cost);
+    const profitData = dailyData.map(d => d.profit);
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: revenueData,
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Cost',
+                    data: costData,
+                    backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                    borderColor: 'rgb(239, 68, 68)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Profit',
+                    data: profitData,
+                    type: 'line',
+                    fill: false,
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgb(16, 185, 129)',
+                    tension: 0.1,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Daily Revenue, Cost & Profit'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += '₦' + context.parsed.y.toFixed(2);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Amount (₦)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '₦' + value.toFixed(0);
+                        }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    title: {
+                        display: true,
+                        text: 'Profit (₦)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '₦' + value.toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Load profit chart on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadProfitChart();
 });
 </script>
 {% endblock %}

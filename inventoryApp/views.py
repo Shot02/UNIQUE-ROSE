@@ -414,6 +414,129 @@ def admin_dashboard(request):
     # Make sure revenue is not negative
     total_revenue = max(total_payments, Decimal('0.00'))
     
+    # ========== PROFIT CALCULATIONS ==========
+    # Get all sales in the date range with their items
+    sales_in_range = Sale.objects.filter(
+        created_at__range=[start_date, end_date]
+    ).prefetch_related('items__product')
+    
+    total_revenue_from_sales = Decimal('0.00')
+    total_cost_of_goods = Decimal('0.00')
+    total_profit = Decimal('0.00')
+    profit_margin_percentage = Decimal('0.00')
+    
+    for sale in sales_in_range:
+        sale_revenue = Decimal('0.00')
+        sale_cost = Decimal('0.00')
+        
+        for item in sale.items.all():
+            if item.product:  # Make sure product still exists
+                # Revenue from this item (after discounts)
+                item_revenue = item.total
+                # Cost of this item
+                item_cost = item.product.cost_price * Decimal(str(item.quantity))
+                
+                sale_revenue += item_revenue
+                sale_cost += item_cost
+            else:
+                # If product is deleted, use the stored price as revenue
+                # but we can't calculate cost accurately
+                sale_revenue += item.total
+        
+        total_revenue_from_sales += sale_revenue
+        total_cost_of_goods += sale_cost
+    
+    # Calculate profit
+    total_profit = total_revenue_from_sales - total_cost_of_goods
+    
+    # Calculate profit margin percentage (avoid division by zero)
+    if total_revenue_from_sales > 0:
+        profit_margin_percentage = (total_profit / total_revenue_from_sales) * 100
+    else:
+        profit_margin_percentage = Decimal('0.00')
+    
+    # Alternative profit calculation using SaleItem directly (more accurate)
+    # This method doesn't require looping through sales
+    sale_items_in_range = SaleItem.objects.filter(
+        sale__created_at__range=[start_date, end_date]
+    ).select_related('product')
+    
+    alt_total_revenue = Decimal('0.00')
+    alt_total_cost = Decimal('0.00')
+    
+    for item in sale_items_in_range:
+        alt_total_revenue += item.total
+        if item.product:
+            alt_total_cost += item.product.cost_price * Decimal(str(item.quantity))
+    
+    alt_total_profit = alt_total_revenue - alt_total_cost
+    
+    # Calculate profit by payment method
+    profit_by_payment = {
+        'cash': Decimal('0.00'),
+        'transfer': Decimal('0.00'),
+        'card': Decimal('0.00'),
+    }
+    
+    # Get all payments with their associated sale items
+    payments_in_range = Payment.objects.filter(
+        created_at__range=[start_date, end_date],
+        payment_method__in=['cash', 'transfer', 'card']
+    ).select_related('sale')
+    
+    for payment in payments_in_range:
+        if payment.sale:
+            # Calculate profit proportion for this payment
+            sale_total = payment.sale.total
+            if sale_total > 0:
+                payment_ratio = abs(payment.amount) / sale_total
+                
+                # Get all items for this sale
+                sale_items = payment.sale.items.all().select_related('product')
+                payment_profit = Decimal('0.00')
+                
+                for item in sale_items:
+                    item_revenue = item.total * payment_ratio
+                    if item.product:
+                        item_cost = item.product.cost_price * Decimal(str(item.quantity)) * payment_ratio
+                        payment_profit += item_revenue - item_cost
+                
+                profit_by_payment[payment.payment_method] += payment_profit
+    
+    # Get top 5 most profitable products
+    top_profitable_products = []
+    product_profit_map = {}
+    
+    for item in sale_items_in_range:
+        if item.product:
+            product_id = item.product.id
+            if product_id not in product_profit_map:
+                product_profit_map[product_id] = {
+                    'name': item.product.name,
+                    'sku': item.product.sku,
+                    'revenue': Decimal('0.00'),
+                    'cost': Decimal('0.00'),
+                    'quantity_sold': 0,
+                    'profit': Decimal('0.00')
+                }
+            
+            product_profit_map[product_id]['revenue'] += item.total
+            product_profit_map[product_id]['cost'] += item.product.cost_price * Decimal(str(item.quantity))
+            product_profit_map[product_id]['quantity_sold'] += item.quantity
+    
+    # Calculate profit for each product and sort
+    for product_id, data in product_profit_map.items():
+        data['profit'] = data['revenue'] - data['cost']
+        if data['profit'] > 0:
+            top_profitable_products.append(data)
+    
+    # Sort by profit descending and take top 5
+    top_profitable_products = sorted(
+        top_profitable_products, 
+        key=lambda x: x['profit'], 
+        reverse=True
+    )[:5]
+    
     # Recent sales with search and limit
     recent_sales = Sale.objects.filter(
         created_at__range=[start_date, end_date]
@@ -468,6 +591,15 @@ def admin_dashboard(request):
         'card_payments': card_payments,
         'total_refunds': abs(total_refunds),  # Absolute value for display
         'total_revenue': total_revenue,
+        # Profit metrics
+        'total_profit': total_profit,
+        'profit_margin': profit_margin_percentage,
+        'total_cost_of_goods': total_cost_of_goods,
+        'total_revenue_from_sales': total_revenue_from_sales,
+        'alt_total_profit': alt_total_profit,
+        'profit_by_payment': profit_by_payment,
+        'top_profitable_products': top_profitable_products,
+        # Existing data
         'recent_sales': recent_sales,
         'low_stock': low_stock,
         'sales_search': sales_search,
@@ -481,6 +613,113 @@ def admin_dashboard(request):
         UserNotification.mark_as_read(request.user, 'dashboard')
     
     return render(request, 'admin_dashboard.html', context)
+
+
+@login_required
+def profit_stats_api(request):
+    """API endpoint to get profit statistics for dashboard"""
+    try:
+        # Get date range from request
+        date_filter = request.GET.get('date_filter', 'today')
+        today = timezone.now().date()
+        
+        # Calculate date range
+        if date_filter == 'today':
+            start_date = today
+            end_date = today + timedelta(days=1)
+        elif date_filter == 'week':
+            start_date = today - timedelta(days=today.weekday())
+            end_date = start_date + timedelta(days=7)
+        elif date_filter == 'month':
+            start_date = today.replace(day=1)
+            if start_date.month == 12:
+                end_date = start_date.replace(year=start_date.year + 1, month=1, day=1)
+            else:
+                end_date = start_date.replace(month=start_date.month + 1, day=1)
+        elif date_filter == 'year':
+            start_date = today.replace(month=1, day=1)
+            end_date = today.replace(year=today.year + 1, month=1, day=1)
+        else:
+            custom_start = request.GET.get('custom_start')
+            custom_end = request.GET.get('custom_end')
+            if custom_start and custom_end:
+                start_date = datetime.strptime(custom_start, '%Y-%m-%d').date()
+                end_date = datetime.strptime(custom_end, '%Y-%m-%d').date() + timedelta(days=1)
+            else:
+                start_date = today
+                end_date = today + timedelta(days=1)
+        
+        # Get all sale items in range with their products
+        sale_items = SaleItem.objects.filter(
+            sale__created_at__range=[start_date, end_date]
+        ).select_related('product')
+        
+        total_revenue = Decimal('0.00')
+        total_cost = Decimal('0.00')
+        
+        # Daily profit data for chart
+        daily_profit = {}
+        
+        for item in sale_items:
+            # Get sale date for grouping
+            sale_date = item.sale.created_at.date()
+            date_str = sale_date.isoformat()
+            
+            if date_str not in daily_profit:
+                daily_profit[date_str] = {
+                    'date': date_str,
+                    'revenue': Decimal('0.00'),
+                    'cost': Decimal('0.00'),
+                    'profit': Decimal('0.00'),
+                    'items_sold': 0
+                }
+            
+            # Add to totals
+            total_revenue += item.total
+            daily_profit[date_str]['revenue'] += item.total
+            daily_profit[date_str]['items_sold'] += item.quantity
+            
+            if item.product:
+                item_cost = item.product.cost_price * Decimal(str(item.quantity))
+                total_cost += item_cost
+                daily_profit[date_str]['cost'] += item_cost
+        
+        # Calculate profit
+        total_profit = total_revenue - total_cost
+        
+        # Calculate daily profit
+        for date, data in daily_profit.items():
+            data['profit'] = data['revenue'] - data['cost']
+            # Convert to float for JSON
+            data['revenue'] = float(data['revenue'])
+            data['cost'] = float(data['cost'])
+            data['profit'] = float(data['profit'])
+        
+        # Sort daily profit by date
+        daily_profit_list = sorted(daily_profit.values(), key=lambda x: x['date'])
+        
+        # Calculate profit margin
+        profit_margin = 0
+        if total_revenue > 0:
+            profit_margin = float((total_profit / total_revenue) * 100)
+        
+        return JsonResponse({
+            'success': True,
+            'total_revenue': float(total_revenue),
+            'total_cost': float(total_cost),
+            'total_profit': float(total_profit),
+            'profit_margin': profit_margin,
+            'daily_profit': daily_profit_list,
+            'items_sold_count': sale_items.count(),
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
 
 
 # =================== PRODUCT VIEWS ===================

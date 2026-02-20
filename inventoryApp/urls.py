@@ -65,6 +65,7 @@ urlpatterns = [
     path('api/save-cart/', views.save_cart, name='save_cart'),
     path('api/load-saved-cart/<int:cart_id>/', views.load_saved_cart, name='load_saved_cart'),
     path('api/delete-saved-cart/<int:cart_id>/', views.delete_saved_cart, name='delete_saved_cart'),
+    path('api/profit-stats/', views.profit_stats_api, name='profit_stats_api'),
     
     # =================== REAL-TIME SEARCH API ENDPOINTS ===================
     path('api/search/sales/', views.search_sales_api, name='search_sales'),
