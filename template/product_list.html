@@ -1,8 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Products{% endblock %}
 
 {% block content %}
+
+
 <style>
     .search-container {
         background: #fff;
@@ -278,43 +281,72 @@
                     <th>Name</th>
                     <th>SKU</th>
                     <th>Category</th>
+                    <th>Supplier</th>
                     <th>Price</th>
                     <th>Cost</th>
                     <th>Stock</th>
+                    <th>Expiry</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="productTableBody">
                 {% for product in products %}
-                <tr data-product-id="{{ product.id }}"
-                    data-name="{{ product.name }}"
-                    data-sku="{{ product.sku }}"
-                    data-category-id="{{ product.category.id|default:'' }}"
-                    data-category-name="{{ product.category.name|default:'' }}"
-                    data-supplier-id="{{ product.supplier.id|default:'' }}"
-                    data-supplier-name="{{ product.supplier.name|default:'' }}"
-                    data-description="{{ product.description|default:'' }}"
-                    data-price="{{ product.price|floatformat:2 }}"
-                    data-cost-price="{{ product.cost_price|floatformat:2 }}"
-                    data-quantity="{{ product.quantity }}"
-                    data-reorder-level="{{ product.reorder_level }}"
-                    data-image-url="{% if product.image and product.image.url %}{{ product.image.url }}{% endif %}">
+                    <tr data-product-id="{{ product.id }}"
+                        data-name="{{ product.name }}"
+                        data-sku="{{ product.sku }}"
+                        data-category-id="{{ product.category.id|default:'' }}"
+                        data-category-name="{{ product.category.name|default:'' }}"
+                        data-supplier-id="{{ product.supplier.id|default:'' }}"
+                        data-supplier-name="{{ product.supplier.name|default:'' }}"
+                        data-description="{{ product.description|default:'' }}"
+                        data-price="{{ product.price|floatformat:2 }}"
+                        data-cost-price="{{ product.cost_price|floatformat:2 }}"
+                        data-quantity="{{ product.quantity }}"
+                        data-reorder-level="{{ product.reorder_level }}"
+                        data-expiry-date="{% if product.expiry_date %}{{ product.expiry_date|date:'Y-m-d' }}{% endif %}"
+                        data-manufacturing-date="{% if product.manufacturing_date %}{{ product.manufacturing_date|date:'Y-m-d' }}{% endif %}"
+                        data-batch-number="{{ product.batch_number|default:'' }}"
+                        data-location="{{ product.location|default:'' }}"
+                        data-image-url="{% if product.image and product.image.url %}{{ product.image.url }}{% endif %}">
                     <td>
                         {% if product.image %}
                             <img src="{{ product.image.url }}" style="width:50px; height:50px; object-fit:cover; border-radius:6px;" alt="{{ product.name }}">
                         {% else %}
                             <div style="width:50px; height:50px; background:#eee; display:flex; align-items:center; justify-content:center; border-radius:6px; color: #999;">
-                                none
+                                <img src="{% static 'img/unique_logo.png' %}" style="max-width: 30px; max-height: 30px; opacity: 0.3;">
                             </div>
                         {% endif %}
                     </td>
-                    <td><strong>{{ product.name }}</strong></td>
+                    <td><strong>{{ product.name }}</strong>
+                        {% if product.batch_number %}
+                        <br><small style="color: #666;">Batch: {{ product.batch_number }}</small>
+                        {% endif %}
+                    </td>
                     <td><code>{{ product.sku }}</code></td>
                     <td>{{ product.category.name|default:"N/A" }}</td>
+                    <td>{{ product.supplier.name|default:"N/A" }}</td>
                     <td>₦{{ product.price|floatformat:2 }}</td>
                     <td>₦{{ product.cost_price|floatformat:2 }}</td>
                     <td>{{ product.quantity }}</td>
+                    <td>
+                        {% if product.expiry_date %}
+                            {{ product.expiry_date|date:"d/m/Y" }}
+                            {% with days=product.days_until_expiry %}
+                                {% if days < 0 %}
+                                    <br><span class="badge badge-danger">Expired</span>
+                                {% elif days <= 30 %}
+                                    <br><span class="badge badge-warning">{{ days }} days left</span>
+                                {% elif days <= 90 %}
+                                    <br><span class="badge badge-info">{{ days }} days left</span>
+                                {% else %}
+                                    <br><span class="badge badge-success">{{ days }} days left</span>
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            <span class="badge badge-secondary">No expiry</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if product.quantity == 0 %}
                             <span class="badge badge-danger">Out of Stock</span>
@@ -326,11 +358,11 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <button onclick="openEditProductModal({{ product.id }})" class="btn btn-primary btn-sm">
+                            <button onclick="openEditProductModal({{ product.id }})" class="btn btn-primary btn-sm" style="background: #10b981;">
                                 Edit
                             </button>
                             <button onclick="deleteProduct({{ product.id }}, '{{ product.name|escapejs }}')" 
-                                    class="btn btn-danger btn-sm">
+                                    class="btn btn-danger btn-sm" style="background: #dc2626;">
                                 Delete
                             </button>
                         </div>
@@ -338,7 +370,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="9" style="text-align: center; padding: 2rem;">
+                    <td colspan="11" style="text-align: center; padding: 2rem;">
                         <div class="empty-state">
                             <div class="empty-state-icon">📦</div>
                             <h3>No Products Found</h3>
@@ -358,11 +390,12 @@
     </div>
 </div>
 
-<!-- Edit Product Modal -->
+
+<!-- Edit Product Modal - Updated Version -->
 <div id="editProductModal" class="modal-overlay">
     <div class="modal-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 style="margin: 0; font-size: 1.3rem;">Edit Product</h3>
+            <h3 style="margin: 0; font-size: 1.3rem; color: #dc2626;">Edit Product</h3>
             <button onclick="closeEditProductModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
         </div>
         
@@ -370,131 +403,205 @@
             {% csrf_token %}
             <input type="hidden" id="editProductId" name="product_id">
             
-            <div class="grid-2">
-                <div class="form-group">
-                    <label for="editProductName">
-                        Product Name 
-                        <span class="optional-badge">optional</span>
-                    </label>
-                    <input type="text" id="editProductName" name="name" class="form-control" 
-                           placeholder="Product name (optional)">
-                    <span class="field-hint">Defaults to "Unnamed Product" if empty</span>
+            <!-- Basic Information -->
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #10b981;">
+                <h4 style="margin: 0 0 1rem 0; color: #10b981;">Basic Information</h4>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="editProductName">
+                            Product Name 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <input type="text" id="editProductName" name="name" class="form-control" 
+                               placeholder="Product name (optional)">
+                        <span class="field-hint">Defaults to "Unnamed Product" if empty</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductSKU">SKU</label>
+                        <input type="text" id="editProductSKU" class="form-control" disabled
+                               style="background: #f8f9fa; color: #666;">
+                        <span class="field-hint">Auto-generated, cannot be changed</span>
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="editProductSKU">SKU</label>
-                    <input type="text" id="editProductSKU" class="form-control" disabled
-                           style="background: #f8f9fa; color: #666;">
-                    <span class="field-hint">Auto-generated, cannot be changed</span>
+                    <label for="editProductDescription">
+                        Description 
+                        <span class="optional-badge">optional</span>
+                    </label>
+                    <textarea id="editProductDescription" name="description" class="form-control" rows="3" 
+                              placeholder="Product description (optional)"></textarea>
                 </div>
             </div>
             
-            <div class="grid-2">
-                <div class="form-group">
-                    <label for="editProductCategory">
-                        Category 
-                        <span class="optional-badge">optional</span>
-                    </label>
-                    <select id="editProductCategory" name="category" class="form-control">
-                        <option value="">-- Select Category (optional) --</option>
-                        {% for category in categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <input type="text" id="editNewCategory" name="new_category" class="form-control" 
-                           style="margin-top: 0.5rem;" placeholder="Or enter new category (optional)">
+            <!-- Category & Supplier -->
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #10b981;">
+                <h4 style="margin: 0 0 1rem 0; color: #10b981;">Category & Supplier</h4>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="editProductCategory">
+                            Category 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <select id="editProductCategory" name="category" class="form-control">
+                            <option value="">-- Select Category (optional) --</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" id="editNewCategory" name="new_category" class="form-control" 
+                               style="margin-top: 0.5rem;" placeholder="Or enter new category name (optional)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductSupplier">
+                            Supplier 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <select id="editProductSupplier" name="supplier" class="form-control">
+                            <option value="">-- Select Supplier (optional) --</option>
+                            {% for supplier in suppliers %}
+                            <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" id="editNewSupplier" name="new_supplier" class="form-control" 
+                               style="margin-top: 0.5rem;" placeholder="Or enter new supplier name (optional)">
+                        <span class="field-hint">New supplier will be created automatically</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Expiry & Batch Information - NEW SECTION -->
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #dc2626;">
+                <h4 style="margin: 0 0 1rem 0; color: #dc2626;">Expiry & Batch Information</h4>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="editProductManufacturingDate">
+                            Manufacturing Date 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <input type="date" id="editProductManufacturingDate" name="manufacturing_date" class="form-control">
+                        <span class="field-hint">Date of manufacture</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductExpiryDate">
+                            Expiry Date 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <input type="date" id="editProductExpiryDate" name="expiry_date" class="form-control">
+                        <span class="field-hint">Product expiry date</span>
+                    </div>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="editProductBatchNumber">
+                            Batch Number 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <input type="text" id="editProductBatchNumber" name="batch_number" class="form-control" 
+                               placeholder="Batch/Lot number">
+                        <span class="field-hint">Manufacturer batch number</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductLocation">
+                            Location/Shelf 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <input type="text" id="editProductLocation" name="location" class="form-control" 
+                               placeholder="e.g., Shelf A1, Rack 2">
+                        <span class="field-hint">Storage location in store</span>
+                    </div>
+                </div>
+                
+                <div id="expiryWarningContainer" style="display: none; margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; font-size: 0.9rem;">
+                    <!-- Expiry warning will be displayed here -->
+                </div>
+            </div>
+            
+            <!-- Pricing and Stock -->
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #10b981;">
+                <h4 style="margin: 0 0 1rem 0; color: #10b981;">Pricing & Stock</h4>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="editProductPrice">
+                            Selling Price (₦) 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <input type="number" id="editProductPrice" name="price" class="form-control" 
+                               step="0.01" min="0" placeholder="0.00 (optional)">
+                        <span class="field-hint">Defaults to 0.00 if empty</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductCostPrice">
+                            Cost Price (₦) 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <input type="number" id="editProductCostPrice" name="cost_price" class="form-control" 
+                               step="0.01" min="0" placeholder="0.00 (optional)">
+                        <span class="field-hint">Defaults to 0.00 if empty</span>
+                    </div>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="editProductQuantity">
+                            Quantity in Stock 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <input type="number" id="editProductQuantity" name="quantity" class="form-control" 
+                               min="0" placeholder="0 (optional)">
+                        <span class="field-hint">Defaults to 0 if empty</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductReorderLevel">
+                            Reorder Level 
+                            <span class="optional-badge">optional</span>
+                        </label>
+                        <input type="number" id="editProductReorderLevel" name="reorder_level" class="form-control" 
+                               min="0" placeholder="10 (optional)">
+                        <span class="field-hint">Defaults to 10 if empty</span>
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="editProductSupplier">
-                        Supplier 
-                        <span class="optional-badge">optional</span>
+                    <label class="checkbox-label" style="margin-top: 0.5rem;">
+                        <input type="checkbox" id="editProductIsActive" name="is_active" value="1" checked>
+                        <span>Product is Active (available for sale)</span>
                     </label>
-                    <select id="editProductSupplier" name="supplier" class="form-control">
-                        <option value="">-- Select Supplier (optional) --</option>
-                        {% for supplier in suppliers %}
-                        <option value="{{ supplier.id }}">{{ supplier.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <input type="text" id="editNewSupplier" name="new_supplier" class="form-control" 
-                           style="margin-top: 0.5rem;" placeholder="Or enter new supplier (optional)">
                 </div>
             </div>
             
-            <div class="form-group">
-                <label for="editProductDescription">
-                    Description 
-                    <span class="optional-badge">optional</span>
-                </label>
-                <textarea id="editProductDescription" name="description" class="form-control" rows="3" 
-                          placeholder="Product description (optional)"></textarea>
-            </div>
-            
-            <div class="grid-2">
+            <!-- Product Image -->
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 1rem 0; color: #10b981;">Product Image</h4>
                 <div class="form-group">
-                    <label for="editProductPrice">
-                        Selling Price (₦) 
+                    <label for="editProductImage">
+                        Product Image 
                         <span class="optional-badge">optional</span>
                     </label>
-                    <input type="number" id="editProductPrice" name="price" class="form-control" 
-                           step="0.01" min="0" placeholder="0.00 (optional)">
-                    <span class="field-hint">Defaults to 0.00 if empty</span>
-                </div>
-                
-                <div class="form-group">
-                    <label for="editProductCostPrice">
-                        Cost Price (₦) 
-                        <span class="optional-badge">optional</span>
-                    </label>
-                    <input type="number" id="editProductCostPrice" name="cost_price" class="form-control" 
-                           step="0.01" min="0" placeholder="0.00 (optional)">
-                    <span class="field-hint">Defaults to 0.00 if empty</span>
-                </div>
-            </div>
-            
-            <div class="grid-2">
-                <div class="form-group">
-                    <label for="editProductQuantity">
-                        Quantity 
-                        <span class="optional-badge">optional</span>
-                    </label>
-                    <input type="number" id="editProductQuantity" name="quantity" class="form-control" 
-                           min="0" placeholder="0 (optional)">
-                    <span class="field-hint">Defaults to 0 if empty</span>
-                </div>
-                
-                <div class="form-group">
-                    <label for="editProductReorderLevel">
-                        Reorder Level 
-                        <span class="optional-badge">optional</span>
-                    </label>
-                    <input type="number" id="editProductReorderLevel" name="reorder_level" class="form-control" 
-                           min="0" placeholder="10 (optional)">
-                    <span class="field-hint">Defaults to 10 if empty</span>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="editProductImage">
-                    Product Image 
-                    <span class="optional-badge">optional</span>
-                </label>
-                <input type="file" id="editProductImage" name="image" class="form-control" accept="image/*">
-                
-                <div style="margin-top: 1rem;">
-                    <p style="margin-bottom: 0.5rem; font-weight: 500;">Current Image:</p>
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div id="currentImageContainer" class="image-placeholder">
-                            No image
-                        </div>
-                        <div>
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="editClearImage" name="clear_image" value="1">
-                                <span>Remove current image</span>
-                            </label>
-                            <p class="field-hint" style="margin-top: 0.5rem;">
-                                Upload a new image to replace the current one (optional)
-                            </p>
+                    <input type="file" id="editProductImage" name="image" class="form-control" accept="image/*">
+                    
+                    <div style="margin-top: 1rem;">
+                        <p style="margin-bottom: 0.5rem; font-weight: 500;">Current Image:</p>
+                        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <div id="currentImageContainer" class="image-placeholder">
+                                <img src="{% static 'img/unique_logo.png' %}" style="max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0.3;">
+                            </div>
+                            <div>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="editClearImage" name="clear_image" value="1">
+                                    <span>Remove current image</span>
+                                </label>
+                                <p class="field-hint" style="margin-top: 0.5rem;">
+                                    Upload a new image to replace the current one (optional)
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -507,10 +614,10 @@
             </div>
             
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <button type="submit" class="btn btn-success" style="flex: 1; padding: 0.75rem;" id="editProductSubmitBtn">
+                <button type="submit" class="btn btn-success" style="flex: 1; padding: 0.75rem; background: #10b981;" id="editProductSubmitBtn">
                     Save Changes
                 </button>
-                <button type="button" onclick="closeEditProductModal()" class="btn btn-danger" style="padding: 0.75rem 1.5rem;">
+                <button type="button" onclick="closeEditProductModal()" class="btn btn-danger" style="padding: 0.75rem 1.5rem; background: #dc2626;">
                     Cancel
                 </button>
             </div>
@@ -520,63 +627,7 @@
 
 <script>
 // ==============================================
-// CLEANUP SECTION - PREVENT ANY BACKGROUND ERRORS
-// ==============================================
-(function() {
-    // Remove any existing error toasts
-    document.querySelectorAll('.toast').forEach(toast => {
-        if (!toast.classList.contains('toast-success')) {
-            toast.remove();
-        }
-    });
-    
-    // Clear any global timers that might be running
-    const maxTimerId = 10000;
-    for (let i = 0; i < maxTimerId; i++) {
-        clearTimeout(i);
-        clearInterval(i);
-    }
-    
-    // Clean up any AbortControllers
-    if (window.searchController) {
-        window.searchController.abort();
-        window.searchController = null;
-    }
-    
-    // Remove any global event listeners
-    const oldInput = document.getElementById('productSearchInput');
-    if (oldInput) {
-        const newInput = oldInput.cloneNode(true);
-        oldInput.parentNode.replaceChild(newInput, oldInput);
-    }
-})();
-
-// ==============================================
-// TOAST NOTIFICATION FUNCTION
-// ==============================================
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-        <div class="toast-content">
-            ${message}
-        </div>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => {
-            if (toast.parentNode) {
-                document.body.removeChild(toast);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// ==============================================
-// PRODUCT EDIT MODAL FUNCTIONS
+// UPDATED OPEN EDIT MODAL FUNCTION
 // ==============================================
 function openEditProductModal(productId) {
     try {
@@ -586,6 +637,7 @@ function openEditProductModal(productId) {
             return;
         }
         
+        // Extract all data attributes
         const productData = {
             id: row.dataset.productId || '',
             name: row.dataset.name || '',
@@ -599,34 +651,63 @@ function openEditProductModal(productId) {
             costPrice: row.dataset.costPrice || '0.00',
             quantity: row.dataset.quantity || '0',
             reorderLevel: row.dataset.reorderLevel || '10',
+            expiryDate: row.dataset.expiryDate || '',
+            batchNumber: row.dataset.batchNumber || '',
+            location: row.dataset.location || '',
             imageUrl: row.dataset.imageUrl || ''
         };
         
+        // Populate basic fields
         document.getElementById('editProductId').value = productData.id;
         document.getElementById('editProductName').value = productData.name || '';
         document.getElementById('editProductSKU').value = productData.sku || '';
+        
+        // Category fields
         document.getElementById('editProductCategory').value = productData.categoryId || '';
         document.getElementById('editNewCategory').value = (productData.categoryName && !productData.categoryId) ? productData.categoryName : '';
+        
+        // Supplier fields
         document.getElementById('editProductSupplier').value = productData.supplierId || '';
         document.getElementById('editNewSupplier').value = (productData.supplierName && !productData.supplierId) ? productData.supplierName : '';
+        
+        // Description
         document.getElementById('editProductDescription').value = productData.description || '';
+        
+        // Pricing and stock
         document.getElementById('editProductPrice').value = productData.price || '0.00';
         document.getElementById('editProductCostPrice').value = productData.costPrice || '0.00';
         document.getElementById('editProductQuantity').value = productData.quantity || '0';
         document.getElementById('editProductReorderLevel').value = productData.reorderLevel || '10';
         
+        // NEW: Expiry and batch fields
+        document.getElementById('editProductExpiryDate').value = productData.expiryDate || '';
+        document.getElementById('editProductBatchNumber').value = productData.batchNumber || '';
+        document.getElementById('editProductLocation').value = productData.location || '';
+        
+        // Check if there's manufacturing date in the data (you may need to add this attribute to your table row)
+        if (row.dataset.manufacturingDate) {
+            document.getElementById('editProductManufacturingDate').value = row.dataset.manufacturingDate;
+        }
+        
+        // Handle image
         const imageContainer = document.getElementById('currentImageContainer');
         if (productData.imageUrl) {
-            imageContainer.innerHTML = `<img src="${productData.imageUrl}" class="image-preview">`;
+            imageContainer.innerHTML = `<img src="${productData.imageUrl}" class="image-preview" style="max-width: 120px; max-height: 120px; object-fit: cover;">`;
             imageContainer.className = 'image-preview';
             document.getElementById('editClearImage').disabled = false;
         } else {
-            imageContainer.innerHTML = 'No image';
+            imageContainer.innerHTML = `<img src="{% static 'img/unique_logo.png' %}" style="max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0.3;">`;
             imageContainer.className = 'image-placeholder';
             document.getElementById('editClearImage').disabled = true;
             document.getElementById('editClearImage').checked = false;
         }
         
+        // Check expiry status and show warning if needed
+        if (productData.expiryDate) {
+            checkExpiryStatus(productData.expiryDate);
+        }
+        
+        // Show modal
         document.getElementById('editProductModal').style.display = 'flex';
         document.getElementById('editProductName').focus();
         
@@ -636,38 +717,102 @@ function openEditProductModal(productId) {
     }
 }
 
+// ==============================================
+// NEW: Check expiry status function
+// ==============================================
+function checkExpiryDate(expiryDate) {
+    if (!expiryDate) return;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(expiryDate);
+    expiry.setHours(0, 0, 0, 0);
+    
+    const diffTime = expiry - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const warningContainer = document.getElementById('expiryWarningContainer');
+    
+    if (diffDays < 0) {
+        warningContainer.style.display = 'block';
+        warningContainer.style.background = '#fee2e2';
+        warningContainer.style.color = '#b91c1c';
+        warningContainer.style.border = '1px solid #dc2626';
+        warningContainer.innerHTML = `⚠️ <strong>EXPIRED:</strong> This product expired ${Math.abs(diffDays)} days ago!`;
+    } else if (diffDays <= 30) {
+        warningContainer.style.display = 'block';
+        warningContainer.style.background = '#fef3c7';
+        warningContainer.style.color = '#92400e';
+        warningContainer.style.border = '1px solid #f59e0b';
+        warningContainer.innerHTML = `⚠️ <strong>EXPIRING SOON:</strong> Only ${diffDays} days remaining until expiry!`;
+    } else if (diffDays <= 90) {
+        warningContainer.style.display = 'block';
+        warningContainer.style.background = '#dbeafe';
+        warningContainer.style.color = '#1e40af';
+        warningContainer.style.border = '1px solid #3b82f6';
+        warningContainer.innerHTML = `ℹ️ <strong>EXPIRING:</strong> ${diffDays} days remaining until expiry.`;
+    } else {
+        warningContainer.style.display = 'none';
+    }
+}
+
+// Add event listener for expiry date changes
+document.getElementById('editProductExpiryDate').addEventListener('change', function() {
+    if (this.value) {
+        checkExpiryDate(this.value);
+    } else {
+        document.getElementById('expiryWarningContainer').style.display = 'none';
+    }
+});
+
+// ==============================================
+// UPDATED CLOSE MODAL FUNCTION
+// ==============================================
 function closeEditProductModal() {
     document.getElementById('editProductModal').style.display = 'none';
     const form = document.getElementById('editProductForm');
     form.reset();
     
     const imageContainer = document.getElementById('currentImageContainer');
-    imageContainer.innerHTML = 'No image';
+    imageContainer.innerHTML = `<img src="{% static 'img/unique_logo.png' %}" style="max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0.3;">`;
     imageContainer.className = 'image-placeholder';
     
     document.getElementById('editClearImage').checked = false;
     document.getElementById('editClearImage').disabled = true;
     
+    // Hide expiry warning
+    document.getElementById('expiryWarningContainer').style.display = 'none';
+    
     const submitBtn = document.getElementById('editProductSubmitBtn');
     submitBtn.disabled = false;
     submitBtn.innerHTML = 'Save Changes';
-    submitBtn.style.background = '';
+    submitBtn.style.background = '#10b981';
 }
 
 // ==============================================
-// FORM HANDLERS
+// UPDATED FORM SUBMISSION
 // ==============================================
 document.getElementById('editProductForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const submitBtn = document.getElementById('editProductSubmitBtn');
     const formData = new FormData(this);
+    const productId = formData.get('product_id');
+    
+    // Validate expiry date is after manufacturing date
+    const mfgDate = formData.get('manufacturing_date');
+    const expDate = formData.get('expiry_date');
+    
+    if (mfgDate && expDate && new Date(expDate) < new Date(mfgDate)) {
+        showToast('Expiry date cannot be earlier than manufacturing date!', 'error');
+        return;
+    }
     
     try {
         submitBtn.disabled = true;
         submitBtn.innerHTML = 'Saving...';
         
-        const response = await fetch(`/products/edit/${formData.get('product_id')}/`, {
+        const response = await fetch(`/products/edit/${productId}/`, {
             method: 'POST',
             body: formData,
             headers: {
@@ -680,7 +825,7 @@ document.getElementById('editProductForm').addEventListener('submit', async func
         
         if (result.success) {
             submitBtn.innerHTML = '✓ Saved!';
-            submitBtn.style.background = '#10b981';
+            submitBtn.style.background = '#059669';
             showToast('Product updated successfully!', 'success');
             
             setTimeout(() => {
@@ -692,6 +837,7 @@ document.getElementById('editProductForm').addEventListener('submit', async func
             showToast(result.error || 'Error updating product', 'error');
             submitBtn.disabled = false;
             submitBtn.innerHTML = 'Save Changes';
+            submitBtn.style.background = '#10b981';
         }
         
     } catch (error) {
@@ -699,315 +845,35 @@ document.getElementById('editProductForm').addEventListener('submit', async func
         showToast('Network error. Please try again.', 'error');
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'Save Changes';
+        submitBtn.style.background = '#10b981';
     }
 });
 
 // ==============================================
-// DELETE PRODUCT FUNCTION
+// SUPPLIER/CATEGORY HANDLING
 // ==============================================
-async function deleteProduct(productId, productName) {
-    const result = await confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`);
-    if (result) {
-        try {
-            const deleteBtn = document.querySelector(`button[onclick="deleteProduct(${productId}, '${productName}')"]`);
-            if (deleteBtn) {
-                deleteBtn.disabled = true;
-                deleteBtn.innerHTML = 'Deleting...';
-            }
-            
-            const response = await fetch(`/products/delete/${productId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken')
-                }
-            });
-            
-            if (response.ok) {
-                showToast('Product deleted successfully!', 'success');
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
-            } else {
-                showToast('Failed to delete product', 'error');
-                if (deleteBtn) {
-                    deleteBtn.disabled = false;
-                    deleteBtn.innerHTML = 'Delete';
-                }
-            }
-        } catch (error) {
-            console.error('Delete error:', error);
-            showToast('Network error. Please try again.', 'error');
-            const deleteBtn = document.querySelector(`button[onclick="deleteProduct(${productId}, '${productName}')"]`);
-            if (deleteBtn) {
-                deleteBtn.disabled = false;
-                deleteBtn.innerHTML = 'Delete';
-            }
-        }
+document.getElementById('editProductCategory').addEventListener('change', function() {
+    if (this.value) {
+        document.getElementById('editNewCategory').value = '';
     }
-}
+});
 
-// ==============================================
-// SIMPLE AND RELIABLE SEARCH FUNCTIONALITY
-// ==============================================
-
-let productSearchDebounceTimer;
-let productSearchController = null; // For aborting previous requests
-
-function initializeProductSearch() {
-    const searchInput = document.getElementById('productSearchInput');
-    const searchCount = document.getElementById('productSearchCount');
-    
-    if (!searchInput) return;
-    
-    // Update initial count
-    const initialProducts = document.querySelectorAll('#productTableBody tr[data-product-id]');
-    if (initialProducts.length > 0) {
-        searchCount.innerHTML = `<small>${initialProducts.length} product${initialProducts.length !== 1 ? 's' : ''}</small>`;
-        searchCount.style.display = 'block';
+document.getElementById('editNewCategory').addEventListener('input', function() {
+    if (this.value) {
+        document.getElementById('editProductCategory').value = '';
     }
-    
-    // Input handler with proper debouncing
-    searchInput.addEventListener('input', function() {
-        // Update local count immediately
-        updateProductSearchCount();
-        
-        // Clear any existing debounce timer
-        clearTimeout(productSearchDebounceTimer);
-        
-        // Don't search for single character unless it's delete/backspace
-        if (this.value.length === 1 && this.value !== '' && !searchInput.dataset.lastValue) {
-            searchInput.dataset.lastValue = this.value;
-            return;
-        }
-        
-        searchInput.dataset.lastValue = this.value;
-        
-        // Show loading indicator
-        this.classList.add('searching');
-        
-        // Set new timeout for search
-        productSearchDebounceTimer = setTimeout(() => {
-            performProductSearch(this.value);
-        }, 300); // 300ms delay
-    });
-    
-    // Handle keyboard events
-    searchInput.addEventListener('keydown', function(e) {
-        clearTimeout(productSearchDebounceTimer);
-        
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            this.classList.add('searching');
-            performProductSearch(this.value);
-        } else if (e.key === 'Escape') {
-            e.preventDefault();
-            this.value = '';
-            this.classList.add('searching');
-            performProductSearch('');
-        }
-    });
-    
-    // Focus on search input with cursor at end
-    setTimeout(() => {
-        searchInput.focus();
-        const len = searchInput.value.length;
-        searchInput.setSelectionRange(len, len);
-    }, 100);
-}
+});
 
-async function performProductSearch(searchTerm) {
-    const searchCount = document.getElementById('productSearchCount');
-    
-    // Abort previous request if it exists
-    if (productSearchController) {
-        productSearchController.abort();
+document.getElementById('editProductSupplier').addEventListener('change', function() {
+    if (this.value) {
+        document.getElementById('editNewSupplier').value = '';
     }
-    productSearchController = new AbortController();
-    
-    try {
-        // First, try API search for real-time results
-        const response = await fetch(`/api/search/products/?q=${encodeURIComponent(searchTerm)}`, {
-            signal: productSearchController.signal
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            updateProductTable(data.results);
-            updateProductSearchCount(data.count, data.limited);
-            
-            // Remove loading indicator
-            document.getElementById('productSearchInput').classList.remove('searching');
-        } else {
-            // Fallback to local search if API fails
-            performLocalProductSearch(searchTerm);
-        }
-        
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            // Request was aborted, this is expected
-            return;
-        }
-        
-        console.log('API search failed, falling back to local search:', error);
-        performLocalProductSearch(searchTerm);
-    } finally {
-        // Remove loading indicator
-        const searchInput = document.getElementById('productSearchInput');
-        if (searchInput) {
-            searchInput.classList.remove('searching');
-        }
-    }
-}
+});
 
-function performLocalProductSearch(searchTerm) {
-    const searchLower = searchTerm.toLowerCase();
-    const rows = document.querySelectorAll('#productTableBody tr[data-product-id]');
-    let foundCount = 0;
-    
-    rows.forEach(row => {
-        const name = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-        const sku = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-        const category = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-        
-        if (name.includes(searchLower) || 
-            sku.includes(searchLower) || 
-            category.includes(searchLower)) {
-            row.style.display = '';
-            foundCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    updateProductSearchCount(foundCount, false);
-    
-    // Show empty state if no results
-    const tableBody = document.getElementById('productTableBody');
-    const emptyRow = tableBody.querySelector('tr:not([data-product-id])');
-    
-    if (foundCount === 0) {
-        if (!emptyRow) {
-            const emptyHtml = `
-                <tr>
-                    <td colspan="9" style="text-align: center; padding: 2rem;">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">🔍</div>
-                            <h3>No Products Found</h3>
-                            <p>No products found matching "${searchTerm}"</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            tableBody.innerHTML = emptyHtml;
-        }
-    } else if (emptyRow) {
-        emptyRow.remove();
+document.getElementById('editNewSupplier').addEventListener('input', function() {
+    if (this.value) {
+        document.getElementById('editProductSupplier').value = '';
     }
-}
-
-function updateProductTable(results) {
-    const tableBody = document.getElementById('productTableBody');
-    
-    if (results.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="9" style="text-align: center; padding: 2rem;">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🔍</div>
-                        <h3>No Results Found</h3>
-                        <p>No products found matching your search</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    let rowsHtml = '';
-    results.forEach(product => {
-        // Determine status badge
-        let statusBadge = '';
-        if (product.quantity === 0) {
-            statusBadge = '<span class="badge badge-danger">Out of Stock</span>';
-        } else if (product.is_low_stock) {
-            statusBadge = '<span class="badge badge-warning">Low Stock</span>';
-        } else {
-            statusBadge = '<span class="badge badge-success">In Stock</span>';
-        }
-        
-        // Format image
-        const imageHtml = product.image ? 
-            `<img src="${product.image}" style="width:50px; height:50px; object-fit:cover; border-radius:6px;" alt="${product.name}">` :
-            `<div style="width:50px; height:50px; background:#eee; display:flex; align-items:center; justify-content:center; border-radius:6px; color: #999;">none</div>`;
-        
-        rowsHtml += `
-            <tr data-product-id="${product.id}"
-                data-name="${product.name}"
-                data-sku="${product.sku}"
-                data-category-id="${product.category_id || ''}"
-                data-category-name="${product.category || 'N/A'}"
-                data-supplier-id="${product.supplier_id || ''}"
-                data-supplier-name="${product.supplier || 'N/A'}"
-                data-description="${product.description || ''}"
-                data-price="${product.price.toFixed(2)}"
-                data-cost-price="${product.cost_price.toFixed(2)}"
-                data-quantity="${product.quantity}"
-                data-reorder-level="${product.reorder_level}"
-                data-image-url="${product.image || ''}">
-                <td>${imageHtml}</td>
-                <td><strong>${product.name}</strong></td>
-                <td><code>${product.sku}</code></td>
-                <td>${product.category}</td>
-                <td>₦${product.price.toFixed(2)}</td>
-                <td>₦${product.cost_price.toFixed(2)}</td>
-                <td>${product.quantity}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button onclick="openEditProductModal(${product.id})" class="btn btn-primary btn-sm">
-                            Edit
-                        </button>
-                        <button onclick="deleteProduct(${product.id}, '${product.name.replace(/'/g, "\\'")}')" 
-                                class="btn btn-danger btn-sm">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tableBody.innerHTML = rowsHtml;
-}
-
-function updateProductSearchCount(count, limited = false) {
-    const searchCount = document.getElementById('productSearchCount');
-    
-    if (count > 0) {
-        let countText = `${count} product${count !== 1 ? 's' : ''}`;
-        if (limited) countText += ' (50+)';
-        
-        searchCount.innerHTML = `<small>${countText}</small>`;
-        searchCount.style.display = 'block';
-    } else {
-        searchCount.style.display = 'none';
-    }
-}
-
-// Update your DOMContentLoaded event handler
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize product search (replacing the old initializeSimpleSearch)
-    initializeProductSearch();
-    
-    // Remove any remaining error messages after page load
-    setTimeout(() => {
-        document.querySelectorAll('.toast-error, .toast-warning').forEach(toast => {
-            if (!toast.classList.contains('toast-success')) {
-                toast.remove();
-            }
-        });
-    }, 500);
 });
 </script>
 {% endblock %}

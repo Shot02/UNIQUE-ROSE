@@ -1,10 +1,11 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% load static %}
-    <title>{% block title %}Inventory System{% endblock %}</title>
+    <title>{% block title %}Unique Rose Beauty Base - Inventory System{% endblock %}</title>
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
     <style>
         * {
@@ -15,66 +16,116 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, white 0%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
             min-height: 100vh;
             padding: 20px;
         }
         
-        /* Navigation Bar */
+        /* Navigation Bar - Red Theme with Richer Spacing */
         .navbar {
-            background: #48bb78;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            padding: 2rem 3rem;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(220, 38, 38, 0.2);
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 10px;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            gap: 1rem;
         }
         
         .navbar-brand {
             font-size: 1.5rem;
             font-weight: bold;
-            color: #667eea;
+            color: white;
             display: flex;
             align-items: center;
+            gap: 15px;
+            flex-shrink: 0;
         }
         
+        /* FULLY VISIBLE RECTANGULAR LOGO – NO CROPPING */
         .navbar-brand img.nav-logo {
-            height: 120px;
-            width: 120px;
-            object-fit: cover;
-            border-radius: 50%;
-            margin-right: 10px;
+            height: 70px;          /* increased height for full rectangle */
+            width: auto;            /* auto width preserves original aspect ratio */
+            max-width: 180px;       /* safe limit but never crops */
+            object-fit: contain;    /* ensure full logo visible */
+            object-position: left center;
+            border-radius: 12px;
+            background: white;
+            padding: 8px 12px;      /* more breathing room inside white background */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
-        .navbar-nav {
+        .business-name {
             display: flex;
-            gap: 1.5rem;
-            list-style: none;
-            align-items: center;
+            flex-direction: column;
+        }
+        
+        .business-name-main {
+            font-size: 1.3rem;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        
+        .business-name-sub {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            font-style: italic;
+            white-space: nowrap;
+        }
+        
+        /* Navigation grid: two rows of five buttons each */
+        .nav-grid-container {
+            flex: 2 1 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            min-width: 480px;       /* enough space for 5 buttons */
+        }
+        
+        .nav-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem 0.8rem;
         }
         
         .nav-link {
             text-decoration: none;
-            color: #333;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
+            color: white;
+            padding: 1rem 3rem;
+            border-radius: 30px;
             transition: all 0.3s;
             position: relative;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            white-space: nowrap;
         }
         
         .nav-link:hover {
-            background: #667eea;
-            color: white;
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.4);
         }
         
         .nav-link.active {
-            background: #667eea;
-            color: white;
+            background: rgba(255,255,255,0.25);
+            font-weight: 600;
+            border-color: rgba(255,255,255,0.5);
         }
         
         /* Notification Badge */
@@ -82,11 +133,11 @@
             position: absolute;
             top: -8px;
             right: -8px;
-            background: #ff4757;
+            background: #10b981;
             color: white;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             font-size: 12px;
             display: flex;
             align-items: center;
@@ -94,32 +145,34 @@
             font-weight: bold;
             animation: pulse 2s infinite;
             z-index: 100;
+            border: 2px solid white;
         }
         
         .notification-badge-dot {
             position: absolute;
             top: -5px;
             right: -5px;
-            background: #ff4757;
+            background: #10b981;
             border-radius: 50%;
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             animation: pulse 2s infinite;
             z-index: 100;
+            border: 2px solid white;
         }
         
         @keyframes pulse {
             0% {
                 transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
             }
             70% {
                 transform: scale(1.1);
-                box-shadow: 0 0 0 10px rgba(255, 71, 87, 0);
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
             }
             100% {
                 transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(255, 71, 87, 0);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
             }
         }
         
@@ -127,38 +180,73 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            flex-shrink: 0;
         }
         
         .user-badge {
-            background: #667eea;
+            background: rgba(255,255,255,0.15);
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(5px);
+            white-space: nowrap;
+        }
+        
+        .btn-logout {
+            background: #10b981;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2);
+            white-space: nowrap;
+        }
+        
+        .btn-logout:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .saved-carts-badge {
-            background: #f39c12;
+            background: #10b981;
             color: white;
-            padding: 0.3rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
             display: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            white-space: nowrap;
         }
         
         /* Container */
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
+            padding: 0 20px;
         }
         
         /* Cards */
         .card {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
             padding: 2rem;
             margin-bottom: 1.5rem;
+            border: 1px solid rgba(220, 38, 38, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            box-shadow: 0 12px 24px rgba(220, 38, 38, 0.12);
         }
         
         .card-header {
@@ -168,8 +256,9 @@
         }
         
         .card-header h2 {
-            color: #333;
+            color: #dc2626;
             font-size: 1.5rem;
+            font-weight: 600;
         }
         
         /* Forms */
@@ -188,71 +277,50 @@
             width: 100%;
             padding: 0.75rem;
             border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 1rem;
             transition: border-color 0.3s;
         }
         
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
         }
         
-        /* Buttons */
+        /* Buttons - All Green */
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 30px;
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s;
             text-decoration: none;
             display: inline-block;
+            font-weight: 500;
         }
         
-        .btn-primary {
-            background: #667eea;
+        .btn-primary, .btn-success, .btn-info, .btn-warning {
+            background: #10b981;
             color: white;
         }
         
-        .btn-primary:hover {
-            background: #5568d3;
-        }
-        
-        .btn-success {
-            background: #48bb78;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #38a169;
+        .btn-primary:hover, .btn-success:hover, .btn-info:hover, .btn-warning:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
         
         .btn-danger {
-            background: #f56565;
+            background: #dc2626;
             color: white;
         }
         
         .btn-danger:hover {
-            background: #e53e3e;
-        }
-
-        .btn-warning {
-            background: #ed8936;
-            color: white;
-        }
-        
-        .btn-warning:hover {
-            background: #dd7711;
-        }
-
-        .btn-info {
-            background: #4299e1;
-            color: white;
-        }
-        
-        .btn-info:hover {
-            background: #3182ce;
+            background: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
         }
         
         .btn-sm {
@@ -276,7 +344,11 @@
         table th {
             background: #f8f9fa;
             font-weight: 600;
-            color: #333;
+            color: #dc2626;
+        }
+        
+        table tr:hover {
+            background: #f8f9fa;
         }
         
         /* Messages */
@@ -286,39 +358,40 @@
         
         .alert {
             padding: 1rem;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 1rem;
         }
         
         .alert-success {
-            background: #c6f6d5;
-            color: #22543d;
-            border: 1px solid #9ae6b4;
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
         }
         
         .alert-error {
-            background: #fed7d7;
-            color: #742a2a;
-            border: 1px solid #fc8181;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #dc2626;
         }
         
         .alert-info {
-            background: #bee3f8;
-            color: #2c5282;
-            border: 1px solid #90cdf4;
+            background: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #38bdf8;
         }
 
         .badge {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-            border-radius: 8px;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 20px;
             font-weight: 600;
             display: inline-block;
         }
         
-        .badge-success { background: #d1fae5; color: #065f46; }
-        .badge-warning { background: #fef3c7; color: #92400e; }
-        .badge-danger  { background: #fee2e2; color: #b91c1c; }
+        .badge-success { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+        .badge-warning { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+        .badge-danger  { background: #fee2e2; color: #b91c1c; border: 1px solid #dc2626; }
+        .badge-info    { background: #e0f2fe; color: #0369a1; border: 1px solid #38bdf8; }
         
         /* Toast Notifications */
         .toast {
@@ -326,8 +399,8 @@
             top: 20px;
             right: 20px;
             padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             z-index: 10000;
             animation: slideIn 0.3s ease-out;
             max-width: 300px;
@@ -335,10 +408,10 @@
             font-weight: 500;
         }
         
-        .toast-success { background: #48bb78; }
-        .toast-error { background: #f56565; }
-        .toast-info { background: #667eea; }
-        .toast-warning { background: #ed8936; }
+        .toast-success { background: #10b981; }
+        .toast-error { background: #dc2626; }
+        .toast-info { background: #3b82f6; }
+        .toast-warning { background: #f59e0b; }
         
         @keyframes slideIn {
             from {
@@ -351,18 +424,7 @@
             }
         }
         
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-        }
-        
-        /* Global Modal Styles */
+        /* Global Modal Styles (unchanged) */
         .global-modal-overlay {
             position: fixed;
             top: 0;
@@ -380,13 +442,14 @@
         .global-modal-content {
             background: white;
             padding: 2rem;
-            border-radius: 12px;
+            border-radius: 16px;
             width: 500px;
             max-width: 90%;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             animation: modalFadeIn 0.3s ease-out;
+            border-top: 4px solid #10b981;
         }
 
         @keyframes modalFadeIn {
@@ -400,25 +463,11 @@
             }
         }
         
-        .global-modal-success .global-modal-content {
-            border-top: 4px solid #48bb78;
-        }
-        
-        .global-modal-error .global-modal-content {
-            border-top: 4px solid #f56565;
-        }
-        
-        .global-modal-warning .global-modal-content {
-            border-top: 4px solid #ed8936;
-        }
-        
-        .global-modal-info .global-modal-content {
-            border-top: 4px solid #667eea;
-        }
-        
-        .global-modal-confirm .global-modal-content {
-            border-top: 4px solid #667eea;
-        }
+        .global-modal-success .global-modal-content { border-top-color: #10b981; }
+        .global-modal-error .global-modal-content { border-top-color: #dc2626; }
+        .global-modal-warning .global-modal-content { border-top-color: #f59e0b; }
+        .global-modal-info .global-modal-content { border-top-color: #3b82f6; }
+        .global-modal-confirm .global-modal-content { border-top-color: #10b981; }
         
         .global-modal-buttons {
             display: flex;
@@ -440,134 +489,141 @@
             cursor: pointer;
             color: #666;
         }
-
-        /* Mobile responsiveness for notification badges */
-        @media (max-width: 768px) {
-            .notification-badge {
-                top: 0;
-                right: 0;
-                width: 18px;
-                height: 18px;
-                font-size: 10px;
+        
+        /* Expiry badges */
+        .expiry-expired { background: #fee2e2; color: #b91c1c; border-color: #dc2626; }
+        .expiry-soon { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+        .expiry-valid { background: #d1fae5; color: #065f46; border-color: #10b981; }
+        
+        /* responsive adjustments */
+        @media (max-width: 1100px) {
+            .navbar {
+                flex-direction: column;
+                align-items: stretch;
             }
-            
-            .notification-badge-dot {
-                top: 0;
-                right: 0;
-                width: 8px;
-                height: 8px;
+            .nav-grid-container {
+                min-width: unset;
+                width: 100%;
             }
-            
-            .navbar-nav {
-                gap: 0.5rem;
-            }
-            
-            .nav-link {
-                padding: 0.5rem;
-                font-size: 0.9rem;
+            .user-info {
+                justify-content: flex-end;
             }
         }
-        
+        @media (max-width: 700px) {
+            .nav-row {
+                justify-content: flex-start;
+            }
+            .business-name-main, .business-name-sub {
+                white-space: normal;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
     <body data-unread-dashboard-count="{{ unread_dashboard_count|default:0 }}"
-      data-unread-debtors-count="{{ unread_debtors_count|default:0 }}"
-      data-unread-refunds-count="{{ unread_refunds_count|default:0 }}"
-      data-unread-sales-count="{{ unread_sales_count|default:0 }}">
+          data-unread-debtors-count="{{ unread_debtors_count|default:0 }}"
+          data-unread-refunds-count="{{ unread_refunds_count|default:0 }}"
+          data-unread-sales-count="{{ unread_sales_count|default:0 }}">
 </head>
 <body>
-    <!-- Global Modal - Only for important confirmations -->
+    <!-- Global Modal (unchanged) -->
     <div id="globalModal" class="global-modal-overlay">
         <div class="global-modal-content">
             <div class="global-modal-title">
-                <h3 id="modalTitle" style="margin: 0;">Confirm</h3>
+                <h3 id="modalTitle" style="margin: 0; color: #dc2626;">Confirm</h3>
                 <button id="modalCloseBtn" class="global-modal-close">&times;</button>
             </div>
-            <div id="modalContent" style="margin-bottom: 1rem;">
-                <!-- Modal content will be inserted here -->
-            </div>
-            <div id="modalButtons" class="global-modal-buttons">
-                <!-- Buttons will be inserted here -->
-            </div>
+            <div id="modalContent" style="margin-bottom: 1rem;"></div>
+            <div id="modalButtons" class="global-modal-buttons"></div>
         </div>
     </div>
     
     <div class="container">
-        <!-- Navigation Bar -->
+        <!-- Navigation Bar with two-row, five-button layout -->
         {% if user.is_authenticated %}
         <nav class="navbar">
             <div class="navbar-brand">
-                <img class="nav-logo" src="{% static 'img/inventory_logo.jpeg' %}" alt="Logo">
+                <!-- RECTANGULAR LOGO: fully visible, aspect preserved -->
+                <img class="nav-logo" src="{% static 'img/unique_logo.png' %}" alt="Unique Rose Beauty Base Logo">
+                <div class="business-name">
+                    <span class="business-name-main">UNIQUE ROSE</span>
+                    <span class="business-name-sub">Beauty Base</span>
+                </div>
             </div>
             
-            <ul class="navbar-nav">
-                <li>
-                    <a href="{% url 'home' %}" class="nav-link">POS</a>
-                </li>
-                
-                <li>
+            <!-- Two rows of five buttons each (10 total) -->
+            <div class="nav-grid-container">
+                <!-- FIRST ROW: 5 buttons -->
+                <div class="nav-row">
+                    <!-- POS -->
+                    <a href="{% url 'home' %}" class="nav-link {% if request.path == '/home/' %}active{% endif %}">
+                        <span></span> POS
+                    </a>
+                    <!-- Products -->
+                    <a href="{% url 'product_list' %}" class="nav-link {% if '/products/' in request.path %}active{% endif %}">
+                        <span></span> Products
+                    </a>
+                    <!-- Suppliers -->
+                    <a href="{% url 'supplier_list' %}" class="nav-link {% if '/suppliers/' in request.path %}active{% endif %}">
+                        <span></span> Suppliers
+                    </a>
+                    <!-- Customers -->
+                    <a href="{% url 'customer_list' %}" class="nav-link {% if '/customers/' in request.path %}active{% endif %}">
+                        <span></span> Customers
+                    </a>
+                    <!-- Saved Carts -->
                     <a href="{% url 'saved_carts_list' %}" class="nav-link">
-                        Saved Carts
+                        <span></span> Carts
                         <span id="savedCartsNotification" class="notification-badge-dot" style="display: none;"></span>
                     </a>
-                </li>
-                
-                <li>
+                </div>
+                <!-- SECOND ROW: 5 buttons (Debtors, Refunds, Dashboard, Staff, Sales) -->
+                <div class="nav-row">
+                    <!-- Debtors -->
                     <a href="{% url 'debtors_list' %}" class="nav-link">
-                        Debtors
+                        <span></span> Debtors
                         {% if unread_debtors_count > 0 %}
                         <span class="notification-badge">{{ unread_debtors_count }}</span>
                         {% endif %}
                     </a>
-                </li>
-                
-                <li>
+                    <!-- Refunds -->
                     <a href="{% url 'refund_requests_list' %}" class="nav-link">
-                        Refunds
+                        <span>↩</span> Refunds
                         {% if unread_refunds_count > 0 %}
                         <span class="notification-badge">{{ unread_refunds_count }}</span>
                         {% endif %}
                     </a>
-                </li>
-                
-                {% if user.role == 'admin' or user.is_superuser %}
-                    <li>
-                        <a href="{% url 'admin_dashboard' %}" class="nav-link">
-                            Dashboard
+                    <!-- Admin only: Dashboard, Staff, Sales (visible only to admin) -->
+                    {% if user.role == 'admin' or user.is_superuser %}
+                        <a href="{% url 'admin_dashboard' %}" class="nav-link {% if '/admin_dashboard' in request.path %}active{% endif %}">
+                            <span></span> Dashboard
                             {% if unread_dashboard_count > 0 %}
                             <span class="notification-badge">{{ unread_dashboard_count }}</span>
                             {% endif %}
                         </a>
-                    </li>
-                    
-                    <li>
-                        <a href="{% url 'product_list' %}" class="nav-link">Products</a>
-                    </li>
-                    
-                    <li>
-                        <a href="{% url 'staff_list' %}" class="nav-link">Staff</a>
-                    </li>
-                    
-                    <li>
-                        <a href="{% url 'sale_history' %}" class="nav-link">
-                            Sales History
+                        <a href="{% url 'staff_list' %}" class="nav-link {% if '/staff/' in request.path %}active{% endif %}">
+                            <span></span> Staff
+                        </a>
+                        <a href="{% url 'sale_history' %}" class="nav-link {% if '/sale_history' in request.path %}active{% endif %}">
+                            <span></span> Sales
                             {% if unread_sales_count > 0 %}
                             <span class="notification-badge">{{ unread_sales_count }}</span>
                             {% endif %}
                         </a>
-                    </li>
-                {% endif %}
-            </ul>
+                    {% else %}
+
+                    {% endif %}
+                </div>
+            </div>
             
             <div class="user-info">
                 <span id="savedCartsBadge" class="saved-carts-badge">
-                    📂 Saved
+                    Saved
                 </span>
                 <span class="user-badge">
                     {{ user.first_name|default:user.username }} 
                     {% if user.role == 'admin' %}(Admin){% else %}(Staff){% endif %}
                 </span>
-                <a href="{% url 'logout' %}" class="btn btn-danger" style="padding: 0.5rem 1rem;">Logout</a>
+                <a href="{% url 'logout' %}" class="btn-logout">Logout</a>
             </div>
         </nav>
         {% endif %}
@@ -588,9 +644,7 @@
     </div>
     
     <script>
-        // ========== NOTIFICATION SYSTEM ==========
-        
-        // Function to get notification counts from server
+        // ========== NOTIFICATION SYSTEM (unchanged) ==========
         async function getNotificationCounts() {
             try {
                 const response = await fetch('/api/notification-counts/');
@@ -606,28 +660,21 @@
             return null;
         }
         
-        // Function to update notification badges in the navbar
         function updateNotificationBadges(counts) {
             if (!counts) return;
             
-            // Update debtors badge
             updateSingleBadge('debtors', counts.debtors_count);
-            
-            // Update refunds badge
             updateSingleBadge('refunds', counts.refunds_count);
             
-            // Update dashboard badge (only for admin users)
             if (document.querySelector('a[href*="admin_dashboard"]')) {
                 updateSingleBadge('dashboard', counts.dashboard_count);
             }
             
-            // Update sales history badge (only for admin users)
             if (document.querySelector('a[href*="sale_history"]')) {
                 updateSingleBadge('sales', counts.sales_count);
             }
         }
         
-        // Function to update a single notification badge
         function updateSingleBadge(pageType, count) {
             const link = document.querySelector(`a[href*="${pageType}"]`);
             if (!link) return;
@@ -649,7 +696,6 @@
             }
         }
         
-        // Function to mark notifications as read
         async function markNotificationsAsRead(notificationType) {
             try {
                 const response = await fetch('/mark-notifications-read/', {
@@ -665,7 +711,6 @@
                 
                 const data = await response.json();
                 if (data.success) {
-                    // Update the badge locally immediately
                     updateSingleBadge(notificationType, 0);
                 }
             } catch (error) {
@@ -673,7 +718,6 @@
             }
         }
         
-        // Function to determine current page type
         function getCurrentPageType() {
             const path = window.location.pathname;
             
@@ -685,10 +729,8 @@
             return null;
         }
         
-        // Periodically check for new notifications
         let notificationInterval;
         function startNotificationPolling() {
-            // Check every 30 seconds
             notificationInterval = setInterval(async () => {
                 const counts = await getNotificationCounts();
                 if (counts) {
@@ -697,17 +739,13 @@
             }, 30000);
         }
         
-        // Stop notification polling
         function stopNotificationPolling() {
             if (notificationInterval) {
                 clearInterval(notificationInterval);
             }
         }
         
-        // ========== GLOBAL MODAL SYSTEM ==========
-        let modalResolveCallback = null;
-        
-        // Show basic modal
+        // ========== GLOBAL MODAL SYSTEM (unchanged) ==========
         window.showModal = function(title, message, type = 'info', onClose = null) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('globalModal');
@@ -723,7 +761,7 @@
                 modalContent.innerHTML = `<p style="font-size: 1.1rem; line-height: 1.5;">${message}</p>`;
                 
                 modalButtons.innerHTML = `
-                    <button id="modalOkBtn" class="btn btn-primary" style="flex: 1;">
+                    <button id="modalOkBtn" class="btn btn-primary" style="flex: 1; background: #10b981;">
                         OK
                     </button>
                 `;
@@ -757,7 +795,6 @@
             });
         };
         
-        // Show confirm modal
         window.showConfirmModal = function(title, message, confirmCallback, cancelCallback = null) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('globalModal');
@@ -773,7 +810,7 @@
                 modalContent.innerHTML = `<p style="font-size: 1.1rem; line-height: 1.5;">${message}</p>`;
                 
                 modalButtons.innerHTML = `
-                    <button id="modalConfirmBtn" class="btn btn-success" style="flex: 1;">
+                    <button id="modalConfirmBtn" class="btn btn-success" style="flex: 1; background: #10b981;">
                         Yes, Confirm
                     </button>
                     <button id="modalCancelBtn" class="btn btn-danger" style="flex: 1;">
@@ -821,7 +858,6 @@
             });
         };
         
-        // Show prompt modal
         window.showPromptModal = function(title, message, defaultValue = '') {
             return new Promise((resolve) => {
                 const modal = document.getElementById('globalModal');
@@ -840,7 +876,7 @@
                 `;
                 
                 modalButtons.innerHTML = `
-                    <button id="modalOkBtn" class="btn btn-success" style="flex: 1;">
+                    <button id="modalOkBtn" class="btn btn-success" style="flex: 1; background: #10b981;">
                         OK
                     </button>
                     <button id="modalCancelBtn" class="btn btn-danger" style="flex: 1;">
@@ -904,11 +940,6 @@
             const modalContent = document.getElementById('modalContent');
             modalButtons.innerHTML = '';
             modalContent.innerHTML = '';
-            
-            if (modalResolveCallback) {
-                modalResolveCallback(false);
-                modalResolveCallback = null;
-            }
         }
         
         // ========== TOAST NOTIFICATION SYSTEM ==========
@@ -932,10 +963,6 @@
         }
         
         // ========== ALERT/CONFIRM OVERRIDES ==========
-        window.originalAlert = window.alert;
-        window.originalConfirm = window.confirm;
-        window.originalPrompt = window.prompt;
-        
         window.alert = function(message) {
             const msg = String(message).toLowerCase();
             
@@ -1011,8 +1038,6 @@
                 if (cartsGrid && cartsGrid.children.length > 0) {
                     badge.style.display = 'inline-block';
                     badge.textContent = `📂 ${cartsGrid.children.length} Saved`;
-                    
-                    // Show dot notification if there are saved carts
                     notificationDot.style.display = 'block';
                 } else {
                     badge.style.display = 'none';
@@ -1025,33 +1050,21 @@
         
         // ========== EVENT LISTENERS ==========
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize saved carts badge
             checkSavedCartsBadge();
             
-            // Get current page type and mark notifications as read
             const currentPageType = getCurrentPageType();
             if (currentPageType) {
-                // Mark notifications as read for this page
                 markNotificationsAsRead(currentPageType);
             }
             
-            // Get initial notification counts
             getNotificationCounts().then(counts => {
                 if (counts) {
                     updateNotificationBadges(counts);
                 }
             });
             
-            // Start polling for new notifications
             startNotificationPolling();
             
-            // Initialize real-time search
-            initializeRealTimeSearch();
-            
-            // Set up form visual feedback
-            setupFormVisualFeedback();
-            
-            // Add Escape key listener for modal
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     const modal = document.getElementById('globalModal');
@@ -1062,7 +1075,6 @@
             });
         });
         
-        // Clean up on page unload
         window.addEventListener('beforeunload', function() {
             stopNotificationPolling();
         });
@@ -1070,7 +1082,6 @@
         // ========== SEARCH FUNCTIONALITY ==========
         let searchDebounceTimers = {};
 
-        // Initialize real-time search for all pages
         function initializeRealTimeSearch() {
             const searchInputs = document.querySelectorAll('.search-input');
             
@@ -1096,403 +1107,6 @@
                 });
             });
         }
-
-        // Enhanced search function
-        async function performEnhancedSearch(inputElement) {
-            const searchTerm = inputElement.value.trim();
-            const pagePath = window.location.pathname;
-            const inputId = inputElement.id;
-            
-            if (!searchTerm) {
-                // Clear search and reload if no term
-                location.reload();
-                return;
-            }
-            
-            try {
-                let apiUrl = '';
-                let tableId = '';
-                let resultCountId = '';
-                
-                // Determine API endpoint based on current page
-                if (pagePath.includes('admin_dashboard')) {
-                    if (inputId === 'salesSearchInput') {
-                        apiUrl = `/api/search/sales/?q=${encodeURIComponent(searchTerm)}`;
-                        tableId = 'salesTableBody';
-                        resultCountId = 'salesSearchResultCount';
-                    } else if (inputId === 'stockSearchInput') {
-                        apiUrl = `/api/search/stock/?q=${encodeURIComponent(searchTerm)}`;
-                        tableId = 'stockTableBody';
-                        resultCountId = 'stockSearchResultCount';
-                    }
-                } else if (pagePath.includes('products')) {
-                    apiUrl = `/api/search/products/?q=${encodeURIComponent(searchTerm)}`;
-                    tableId = 'productTableBody';
-                    resultCountId = 'productSearchCount';
-                } else if (pagePath.includes('staff')) {
-                    apiUrl = `/api/search/staff/?q=${encodeURIComponent(searchTerm)}`;
-                    tableId = 'staffTableBody';
-                    resultCountId = 'staffSearchCount';
-                } else if (pagePath.includes('debtors')) {
-                    apiUrl = `/api/search/debtors/?q=${encodeURIComponent(searchTerm)}`;
-                    tableId = 'debtorTableBody';
-                    resultCountId = 'debtorSearchCount';
-                } else if (pagePath.includes('sale_history')) {
-                    apiUrl = `/api/sales-history/?q=${encodeURIComponent(searchTerm)}`;
-                    tableId = 'salesTableBody';
-                    resultCountId = 'searchCount';
-                } else if (pagePath.includes('refund')) {
-                    // For refund requests, use the search function that's already working
-                    // We'll handle this in the refund-specific JavaScript
-                    return;
-                }
-                
-                if (!apiUrl) return;
-                
-                // Get date parameters for dashboard
-                const urlParams = new URLSearchParams(window.location.search);
-                const dateFilter = urlParams.get('date_filter') || '{{ date_filter|default:"today" }}';
-                const customStart = urlParams.get('custom_start');
-                const customEnd = urlParams.get('custom_end');
-                
-                // Add date parameters for dashboard search
-                if (pagePath.includes('admin_dashboard')) {
-                    apiUrl += `&date_filter=${dateFilter}`;
-                    if (customStart) apiUrl += `&custom_start=${customStart}`;
-                    if (customEnd) apiUrl += `&custom_end=${customEnd}`;
-                }
-                
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                
-                if (data.success) {
-                    updateSearchTable(tableId, data.results);
-                    updateSearchResultCount(resultCountId, data.count, data.limited);
-                }
-                
-            } catch (error) {
-                console.error('Search error:', error);
-                showToast('Search error occurred', 'error');
-                
-                // Fallback to page reload with search
-                let redirectUrl = window.location.pathname + '?';
-                if (searchTerm) {
-                    redirectUrl += `search=${encodeURIComponent(searchTerm)}`;
-                }
-                window.location.href = redirectUrl;
-            }
-        }
-
-        // Update search table
-        function updateSearchTable(tableId, results) {
-            const tableBody = document.getElementById(tableId);
-            if (!tableBody) return;
-            
-            if (results.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="20" style="text-align: center; padding: 2rem;">
-                            <div style="color: #666; font-size: 1rem;">
-                                <div style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;">🔍</div>
-                                <h4 style="margin: 0 0 0.5rem 0;">No Results Found</h4>
-                                <p style="margin: 0;">Try different search terms</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            let rowsHtml = '';
-            
-            if (tableId === 'productTableBody') {
-                results.forEach(product => {
-                    let statusBadge = '';
-                    if (product.quantity === 0) {
-                        statusBadge = '<span class="badge badge-danger">Out of Stock</span>';
-                    } else if (product.is_low_stock) {
-                        statusBadge = '<span class="badge badge-warning">Low Stock</span>';
-                    } else {
-                        statusBadge = '<span class="badge badge-success">In Stock</span>';
-                    }
-                    
-                    rowsHtml += `
-                        <tr data-product-id="${product.id}"
-                            data-name="${product.name}"
-                            data-sku="${product.sku}"
-                            data-category-id="${product.category_id || ''}"
-                            data-category-name="${product.category || ''}"
-                            data-supplier-id="${product.supplier_id || ''}"
-                            data-supplier-name="${product.supplier || ''}"
-                            data-description="${product.description || ''}"
-                            data-price="${product.price}"
-                            data-cost-price="${product.cost_price}"
-                            data-quantity="${product.quantity}"
-                            data-reorder-level="${product.reorder_level || 10}"
-                            data-image-url="${product.image || ''}">
-                            <td>
-                                ${product.image ? 
-                                    `<img src="${product.image}" style="width:50px; height:50px; object-fit:cover; border-radius:6px;">` : 
-                                    `<div style="width:50px; height:50px; background:#eee; display:flex; align-items:center; justify-content:center; border-radius:6px;">
-                                        none
-                                    </div>`}
-                            </td>
-                            <td><strong>${product.name}</strong></td>
-                            <td><code>${product.sku}</code></td>
-                            <td>${product.category || 'N/A'}</td>
-                            <td>₦${parseFloat(product.price).toFixed(2)}</td>
-                            <td>₦${parseFloat(product.cost_price).toFixed(2)}</td>
-                            <td>${product.quantity}</td>
-                            <td>${statusBadge}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="/products/edit/${product.id}/" class="btn btn-primary btn-sm">Edit</a>
-                                    <button onclick="deleteProduct(${product.id}, '${product.name.replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm">
-                                        Delete
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } else if (tableId === 'salesTableBody') {
-                results.forEach(sale => {
-                    let statusBadge = '';
-                    if (sale.payment_status === 'paid') {
-                        statusBadge = '<span class="badge badge-success">Paid</span>';
-                    } else if (sale.payment_status === 'partial') {
-                        statusBadge = '<span class="badge badge-warning">Partial</span>';
-                    } else {
-                        statusBadge = '<span class="badge badge-danger">Unpaid</span>';
-                    }
-                    
-                    rowsHtml += `
-                        <tr>
-                            <td><strong>${sale.invoice_number}</strong></td>
-                            <td>${sale.customer_name || 'Walk-in'}</td>
-                            <td>${sale.staff_name}</td>
-                            <td>₦${parseFloat(sale.total).toFixed(2)}</td>
-                            <td>${statusBadge}</td>
-                            <td>${new Date(sale.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                            <td>
-                                <a href="/receipt/${sale.id}/" class="btn btn-primary btn-sm">
-                                    View
-                                </a>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } else if (tableId === 'debtorTableBody') {
-                results.forEach(sale => {
-                    rowsHtml += `
-                        <tr>
-                            <td><strong>${sale.invoice_number}</strong></td>
-                            <td>${sale.customer_name || 'Walk-in'}</td>
-                            <td>${sale.customer_phone || '-'}</td>
-                            <td>₦${parseFloat(sale.total).toFixed(2)}</td>
-                            <td>₦${parseFloat(sale.amount_paid).toFixed(2)}</td>
-                            <td><strong style="color: #dc3545;">₦${parseFloat(sale.balance).toFixed(2)}</strong></td>
-                            <td>${new Date(sale.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="/debtors/payment/${sale.id}/" class="btn btn-success btn-sm">
-                                        Record Payment
-                                    </a>
-                                    <a href="/receipt/${sale.id}/" class="btn btn-primary btn-sm">
-                                        View
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } else if (tableId === 'staffTableBody') {
-                results.forEach(staff => {
-                    let roleClass = 'role-staff';
-                    if (staff.role === 'admin') roleClass = 'role-admin';
-                    if (staff.role === 'manager') roleClass = 'role-manager';
-                    
-                    rowsHtml += `
-                        <tr data-staff-id="${staff.id}">
-                            <td><strong>${staff.username}</strong></td>
-                            <td>${staff.first_name} ${staff.last_name}</td>
-                            <td>${staff.email}</td>
-                            <td>${staff.phone || '-'}</td>
-                            <td>
-                                <span class="role-badge ${roleClass}">
-                                    ${staff.role.charAt(0).toUpperCase() + staff.role.slice(1)}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="status-badge ${staff.is_active ? 'status-active' : 'status-inactive'}">
-                                    ${staff.is_active ? 'Active' : 'Inactive'}
-                                </span>
-                            </td>
-                            <td>${new Date(staff.date_joined).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button onclick="openEditStaffModal(${staff.id})" class="btn btn-primary btn-sm">
-                                        Edit
-                                    </button>
-                                    ${staff.username !== '{{ request.user.username }}' ? 
-                                        `<button onclick="confirmDeleteStaff(${staff.id}, '${staff.username.replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm">
-                                            Delete
-                                        </button>` : ''
-                                    }
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-            
-            tableBody.innerHTML = rowsHtml;
-        }
-
-        // Update search result count
-        function updateSearchResultCount(countElementId, count, limited = false) {
-            const countElement = document.getElementById(countElementId);
-            if (!countElement) return;
-            
-            if (count > 0) {
-                let countText = `${count} result${count !== 1 ? 's' : ''}`;
-                if (limited) countText += ' (50+)';
-                
-                countElement.innerHTML = `<small>${countText}</small>`;
-                countElement.style.display = 'block';
-            } else {
-                countElement.style.display = 'none';
-            }
-        }
-        
-        function setupFormVisualFeedback() {
-            document.addEventListener('submit', function(e) {
-                const form = e.target;
-                const submitBtn = form.querySelector('button[type="submit"]');
-                
-                if (submitBtn && !form.classList.contains('no-loading')) {
-                    const originalText = submitBtn.innerHTML;
-                    submitBtn.dataset.originalText = originalText;
-                    
-                    submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
-                    submitBtn.disabled = true;
-                    
-                    setTimeout(() => {
-                        if (submitBtn.disabled) {
-                            submitBtn.innerHTML = originalText;
-                            submitBtn.disabled = false;
-                        }
-                    }, 3000);
-                }
-            });
-            
-            if (!document.querySelector('style[data-spinner]')) {
-                const spinnerStyle = document.createElement('style');
-                spinnerStyle.setAttribute('data-spinner', 'true');
-                spinnerStyle.textContent = `
-                    .spinner {
-                        display: inline-block;
-                        width: 16px;
-                        height: 16px;
-                        border: 2px solid rgba(255,255,255,0.3);
-                        border-radius: 50%;
-                        border-top-color: #fff;
-                        animation: spin 1s ease-in-out infinite;
-                        margin-right: 8px;
-                        vertical-align: middle;
-                    }
-                    
-                    @keyframes spin {
-                        to { transform: rotate(360deg); }
-                    }
-                `;
-                document.head.appendChild(spinnerStyle);
-            }
-        }
-        
-        // Universal delete confirmation
-        async function deleteProduct(productId, productName) {
-            const result = await confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`);
-            if (result) {
-                try {
-                    const response = await fetch(`/products/delete/${productId}/`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': getCookie('csrftoken')
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        showToast('Product deleted successfully!', 'success');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        showToast('Failed to delete product', 'error');
-                    }
-                } catch (error) {
-                    console.error('Delete error:', error);
-                    showToast('Failed to delete product', 'error');
-                }
-            }
-            return false;
-        }
-        
-        // SAVED CART FUNCTIONS
-        async function loadSavedCart(cartId, cartName) {
-            try {
-                const response = await fetch(`/api/load-saved-cart/${cartId}/`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    sessionStorage.setItem('cartToLoad', JSON.stringify({
-                        data: result.cart_data,
-                        name: result.cart_name,
-                        saved_cart_id: cartId
-                    }));
-                    
-                    showToast('Cart loaded successfully! Redirecting...', 'success');
-                    setTimeout(() => {
-                        window.location.href = "{% url 'home' %}";
-                    }, 1000);
-                    
-                } else {
-                    showToast('Error loading cart', 'error');
-                }
-            } catch (error) {
-                console.error('Error loading cart:', error);
-                showToast('Error loading cart', 'error');
-            }
-        }
-        
-        async function deleteSavedCart(cartId, cartName) {
-            const result = await confirm(`Are you sure you want to delete "${cartName}"?`);
-            if (result) {
-                try {
-                    const response = await fetch(`/api/delete-saved-cart/${cartId}/`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': getCookie('csrftoken')
-                        }
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        showToast('Cart deleted successfully!', 'success');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        showToast('Error deleting cart', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error deleting cart:', error);
-                    showToast('Error deleting cart', 'error');
-                }
-            }
-        }
-        
     </script>
     
     {% block extra_js %}{% endblock %}

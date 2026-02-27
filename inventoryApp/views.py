@@ -15,7 +15,9 @@ from decimal import Decimal, InvalidOperation
 
 from .models import (
     User, Product, Sale, SaleItem, Payment, Category, 
-    Supplier, StockMovement, PendingCart, SavedCart, RefundRequest, Refund, UserNotification
+    Supplier, StockMovement, PendingCart, SavedCart, 
+    RefundRequest, Refund, UserNotification,
+    Customer
 )
 
 
@@ -117,7 +119,6 @@ def search_products_api(request):
         'count': len(results),
         'limited': len(results) >= 50
     })
-
 @login_required
 @csrf_exempt
 def process_sale(request):
@@ -125,7 +126,6 @@ def process_sale(request):
         try:
             data = json.loads(request.body)
             
-            # Import Decimal here
             from decimal import Decimal, ROUND_HALF_UP
             
             # Get saved cart ID if exists
@@ -147,6 +147,31 @@ def process_sale(request):
             if not customer_name:
                 return JsonResponse({'success': False, 'error': 'Customer name is required'})
             
+            customer_phone = data.get('customer_phone', '').strip()
+            
+            # ========== CREATE OR UPDATE CUSTOMER ==========
+            if customer_phone:
+                # Try to find existing customer by phone
+                customer, created = Customer.objects.get_or_create(
+                    phone=customer_phone,
+                    defaults={
+                        'name': customer_name,
+                        'customer_type': 'regular'
+                    }
+                )
+                
+                # If customer exists but name is different, update it
+                if not created and customer.name != customer_name:
+                    customer.name = customer_name
+                    customer.save()
+            else:
+                # Create customer with phone as None (walk-in without phone)
+                customer = Customer.objects.create(
+                    name=customer_name,
+                    phone=f"WALKIN-{uuid.uuid4().hex[:8].upper()}",  # Generate unique ID for walk-ins
+                    customer_type='regular'
+                )
+            
             # Calculate with Decimal for precision
             subtotal = Decimal('0')
             for item in data['items']:
@@ -166,7 +191,6 @@ def process_sale(request):
                 sale_discount = item_discounts_total
             
             total = (subtotal - sale_discount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
             amount_paid = Decimal(str(data.get('amount_paid', 0))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             balance = (total - amount_paid).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             
@@ -203,7 +227,7 @@ def process_sale(request):
                 invoice_number=invoice_number,
                 staff=request.user,
                 customer_name=customer_name,
-                customer_phone=data.get('customer_phone', '').strip(),  # Optional
+                customer_phone=customer_phone,
                 subtotal=subtotal,
                 discount=sale_discount,
                 total=total,
@@ -211,6 +235,12 @@ def process_sale(request):
                 balance=balance,
                 payment_status=payment_status
             )
+            
+            # Update customer with purchase information
+            customer.total_purchases += total
+            customer.last_purchase_date = timezone.now()
+            customer.loyalty_points += int(total / 10)  # 1 point per ₦10 spent
+            customer.save()
             
             # Create sale items with Decimal values
             for item in data.get('items', []):
@@ -291,7 +321,8 @@ def process_sale(request):
                 'total': float(total),
                 'balance': float(balance),
                 'cart_deleted': cart_deleted,
-                'cart_id': saved_cart_id if saved_cart else None
+                'cart_id': saved_cart_id if saved_cart else None,
+                'customer_id': customer.id  # Return customer ID
             })
             
         except Exception as e:
@@ -757,6 +788,45 @@ def product_list(request):
     }
     return render(request, 'product_list.html', context)
 
+
+def get_expiring_products():
+    """Get products expiring soon for notifications"""
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    today = timezone.now().date()
+    thirty_days = today + timedelta(days=30)
+    ninety_days = today + timedelta(days=90)
+    
+    expiring_soon = Product.objects.filter(
+        expiry_date__isnull=False,
+        expiry_date__lte=thirty_days,
+        expiry_date__gte=today,
+        quantity__gt=0
+    ).order_by('expiry_date')
+    
+    expiring = Product.objects.filter(
+        expiry_date__isnull=False,
+        expiry_date__gt=thirty_days,
+        expiry_date__lte=ninety_days,
+        quantity__gt=0
+    ).order_by('expiry_date')
+    
+    expired = Product.objects.filter(
+        expiry_date__isnull=False,
+        expiry_date__lt=today,
+        quantity__gt=0
+    ).order_by('expiry_date')
+    
+    return {
+        'expiring_soon': expiring_soon,
+        'expiring': expiring,
+        'expired': expired,
+        'expiring_soon_count': expiring_soon.count(),
+        'expiring_count': expiring.count(),
+        'expired_count': expired.count(),
+    }
+
 @login_required
 def add_product(request):
     if request.method == 'POST':
@@ -764,14 +834,15 @@ def add_product(request):
             name = request.POST.get('name', 'Unnamed Product')
             category_id = request.POST.get('category')
             supplier_id = request.POST.get('supplier')
+            new_supplier_name = request.POST.get('new_supplier', '').strip()
             description = request.POST.get('description', '')
             price = request.POST.get('price')
             cost_price = request.POST.get('cost_price')
             quantity = request.POST.get('quantity')
             reorder_level = request.POST.get('reorder_level')
             image = request.FILES.get('image')
-
-
+            
+            # Handle category
             category = None
             if category_id:
                 try:
@@ -779,13 +850,24 @@ def add_product(request):
                 except (Category.DoesNotExist, ValueError):
                     pass
             
+            # Handle supplier - either select existing or create new
             supplier = None
-            if supplier_id:
+            if new_supplier_name:
+                # Create new supplier
+                supplier, created = Supplier.objects.get_or_create(
+                    name=new_supplier_name,
+                    defaults={
+                        'phone': '0000000000',  # Placeholder phone
+                        'contact_person': 'Unknown'
+                    }
+                )
+            elif supplier_id:
                 try:
                     supplier = Supplier.objects.get(id=supplier_id)
                 except (Supplier.DoesNotExist, ValueError):
                     pass
             
+            # Parse decimal values
             try:
                 price_decimal = Decimal(price) if price else Decimal('0.00')
             except (InvalidOperation, TypeError, ValueError):
@@ -806,7 +888,7 @@ def add_product(request):
             except ValueError:
                 reorder_level_int = 10
             
-            # Create product with all fields - ALL optional
+            # Create product
             product = Product.objects.create(
                 name=name,
                 category=category,
@@ -851,7 +933,7 @@ def edit_product(request, pk):
             
             # Handle category
             category_id = request.POST.get('category')
-            new_category = request.POST.get('new_category')
+            new_category = request.POST.get('new_category', '').strip()
             
             if new_category:
                 category, created = Category.objects.get_or_create(name=new_category)
@@ -864,12 +946,19 @@ def edit_product(request, pk):
             else:
                 product.category = None
             
-            # Handle supplier
+            # Handle supplier - either select existing or create new
             supplier_id = request.POST.get('supplier')
-            new_supplier = request.POST.get('new_supplier')
+            new_supplier_name = request.POST.get('new_supplier', '').strip()
             
-            if new_supplier:
-                supplier, created = Supplier.objects.get_or_create(name=new_supplier)
+            if new_supplier_name:
+                # Create new supplier
+                supplier, created = Supplier.objects.get_or_create(
+                    name=new_supplier_name,
+                    defaults={
+                        'phone': '0000000000',  # Placeholder phone
+                        'contact_person': 'Unknown'
+                    }
+                )
                 product.supplier = supplier
             elif supplier_id:
                 try:
@@ -878,6 +967,20 @@ def edit_product(request, pk):
                     product.supplier = None
             else:
                 product.supplier = None
+            
+            # Update expiry fields
+            manufacturing_date = request.POST.get('manufacturing_date')
+            if manufacturing_date:
+                from datetime import datetime
+                product.manufacturing_date = datetime.strptime(manufacturing_date, '%Y-%m-%d').date()
+            
+            expiry_date = request.POST.get('expiry_date')
+            if expiry_date:
+                from datetime import datetime
+                product.expiry_date = datetime.strptime(expiry_date, '%Y-%m-%d').date()
+            
+            product.batch_number = request.POST.get('batch_number', '')
+            product.location = request.POST.get('location', '')
             
             # Update numeric fields with safe defaults
             try:
@@ -906,7 +1009,6 @@ def edit_product(request, pk):
             
             # Handle image upload
             if 'image' in request.FILES:
-                # Delete old image if exists
                 if product.image:
                     product.image.delete(save=False)
                 product.image = request.FILES['image']
@@ -2604,3 +2706,136 @@ def sale_details_api(request, pk):
             'success': False,
             'error': str(e),
         })
+
+@login_required
+def supplier_list(request):
+    """List all suppliers"""
+    suppliers = Supplier.objects.all().annotate(
+        product_count=Count('product')
+    ).order_by('name')
+    
+    search_query = request.GET.get('search', '')
+    if search_query:
+        suppliers = suppliers.filter(
+            Q(name__icontains=search_query) |
+            Q(contact_person__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+    
+    context = {
+        'suppliers': suppliers,
+        'search_query': search_query,
+    }
+    return render(request, 'supplier_list.html', context)
+
+@login_required
+def add_supplier(request):
+    """Add new supplier"""
+    if request.method == 'POST':
+        # Handle form submission
+        pass
+    return render(request, 'supplier_form.html', {'action': 'Add'})
+
+@login_required
+def edit_supplier(request, pk):
+    """Edit supplier"""
+    supplier = get_object_or_404(Supplier, id=pk)
+    if request.method == 'POST':
+        # Handle form submission
+        pass
+    return render(request, 'supplier_form.html', {'supplier': supplier, 'action': 'Edit'})
+
+@login_required
+def delete_supplier(request, pk):
+    """Delete supplier"""
+    if request.method == 'POST':
+        supplier = get_object_or_404(Supplier, id=pk)
+        supplier.delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+@login_required
+def customer_list(request):
+    """List all customers"""
+    customers = Customer.objects.all().order_by('-created_at')
+    
+    # Calculate stats
+    total_customers = customers.count()
+    vip_count = customers.filter(customer_type='vip').count()
+    wholesale_count = customers.filter(customer_type='wholesale').count()
+    total_points = customers.aggregate(total=Sum('loyalty_points'))['total'] or 0
+    
+    search_query = request.GET.get('search', '')
+    if search_query:
+        customers = customers.filter(
+            Q(name__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+    
+    context = {
+        'customers': customers,
+        'total_customers': total_customers,
+        'vip_count': vip_count,
+        'wholesale_count': wholesale_count,
+        'total_points': total_points,
+        'search_query': search_query,
+    }
+    return render(request, 'customer_list.html', context)
+
+@login_required
+def add_customer(request):
+    """Add new customer"""
+    if request.method == 'POST':
+        # Handle form submission
+        pass
+    return render(request, 'customer_form.html', {'action': 'Add'})
+
+@login_required
+def edit_customer(request, pk):
+    """Edit customer"""
+    customer = get_object_or_404(Customer, id=pk)
+    if request.method == 'POST':
+        # Handle form submission
+        pass
+    return render(request, 'customer_form.html', {'customer': customer, 'action': 'Edit'})
+
+@login_required
+def delete_customer(request, pk):
+    """Delete customer"""
+    if request.method == 'POST':
+        customer = get_object_or_404(Customer, id=pk)
+        customer.delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+@login_required
+def expiring_products_api(request):
+    """API endpoint for expiring products"""
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    today = timezone.now().date()
+    thirty_days = today + timedelta(days=30)
+    
+    expiring_soon = Product.objects.filter(
+        expiry_date__isnull=False,
+        expiry_date__lte=thirty_days,
+        expiry_date__gte=today,
+        quantity__gt=0
+    ).values('id', 'name', 'sku', 'expiry_date', 'quantity')
+    
+    expired = Product.objects.filter(
+        expiry_date__isnull=False,
+        expiry_date__lt=today,
+        quantity__gt=0
+    ).values('id', 'name', 'sku', 'expiry_date', 'quantity')
+    
+    return JsonResponse({
+        'success': True,
+        'expiring_soon': list(expiring_soon),
+        'expired': list(expired),
+        'expiring_soon_count': expiring_soon.count(),
+        'expired_count': expired.count(),
+    })

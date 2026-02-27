@@ -81,6 +81,21 @@ urlpatterns = [
     path('api/all-sales/', views.all_sales_api, name='all_sales'),
     path('api/search-all-sales/', views.search_all_sales_api, name='search_all_sales'),
     path('api/sale-details/<int:pk>/', views.sale_details_api, name='sale_details_api'),
+
+
+    path('suppliers/', views.supplier_list, name='supplier_list'),
+    path('suppliers/add/', views.add_supplier, name='add_supplier'),
+    path('suppliers/edit/<int:pk>/', views.edit_supplier, name='edit_supplier'),
+    path('suppliers/delete/<int:pk>/', views.delete_supplier, name='delete_supplier'),
+    
+    # Customer URLs
+    path('customers/', views.customer_list, name='customer_list'),
+    path('customers/add/', views.add_customer, name='add_customer'),
+    path('customers/edit/<int:pk>/', views.edit_customer, name='edit_customer'),
+    path('customers/delete/<int:pk>/', views.delete_customer, name='delete_customer'),
+    
+
+    path('api/expiring-products/', views.expiring_products_api, name='expiring_products_api'),
 ]
 
 # Serve media files in development

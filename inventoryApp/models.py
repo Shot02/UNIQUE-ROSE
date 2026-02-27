@@ -34,22 +34,83 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
+class Customer(models.Model):
+    """Customer information for loyalty and tracking"""
+    CUSTOMER_TYPE = [
+        ('regular', 'Regular'),
+        ('vip', 'VIP'),
+        ('wholesale', 'Wholesale'),
+    ]
+    
+    name = models.CharField(max_length=200)
+    phone = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True)
+    customer_type = models.CharField(max_length=20, choices=CUSTOMER_TYPE, default='regular')
+    loyalty_points = models.IntegerField(default=0)
+    total_purchases = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    last_purchase_date = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'customers'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['phone']),
+            models.Index(fields=['customer_type']),
+        ]
+    
+    def __str__(self):
+        return f"{self.name} ({self.phone})"
+    
+    def update_purchase_stats(self, amount):
+        """Update customer purchase statistics"""
+        self.total_purchases += amount
+        self.last_purchase_date = timezone.now()
+        self.loyalty_points += int(amount / 10)  # 1 point per ₦10 spent
+        self.save()
+
+
 class Supplier(models.Model):
     name = models.CharField(max_length=200)
     contact_person = models.CharField(max_length=100, blank=True)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=15)
     address = models.TextField(blank=True)
+    website = models.URLField(blank=True, null=True)
+    tax_id = models.CharField(max_length=50, blank=True, null=True)
+    payment_terms = models.CharField(max_length=100, blank=True, default='Cash on Delivery')
+    lead_time_days = models.IntegerField(default=7, validators=[MinValueValidator(0)])
+    rating = models.IntegerField(default=3, choices=[(1, '1 Star'), (2, '2 Stars'), (3, '3 Stars'), (4, '4 Stars'), (5, '5 Stars')])
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         db_table = 'suppliers'
+        ordering = ['name']
     
     def __str__(self):
         return self.name
+    
+    @property
+    def total_products(self):
+        return self.product_set.count()
+    
+    @property
+    def total_purchases(self):
+        from decimal import Decimal
+        total = self.product_set.aggregate(total=models.Sum('quantity'))['total'] or 0
+        return total
+
 
 class Product(models.Model):
-    name = models.CharField(max_length=200, default='Unnamed Product')  # Add default
+    name = models.CharField(max_length=200, default='Unnamed Product')
     sku = models.CharField(max_length=50, unique=True, editable=False, blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True)
@@ -58,6 +119,13 @@ class Product(models.Model):
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     quantity = models.IntegerField(default=0)
     reorder_level = models.IntegerField(default=10)
+    # New expiry fields
+    expiry_date = models.DateField(null=True, blank=True, help_text="Product expiry date")
+    manufacturing_date = models.DateField(null=True, blank=True, help_text="Date of manufacture")
+    batch_number = models.CharField(max_length=50, blank=True, null=True, help_text="Batch/Lot number")
+    # Additional fields
+    location = models.CharField(max_length=100, blank=True, null=True, help_text="Shelf/Storage location")
+    is_active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -65,6 +133,11 @@ class Product(models.Model):
     class Meta:
         db_table = 'products'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['expiry_date']),
+            models.Index(fields=['supplier']),
+            models.Index(fields=['name']),
+        ]
     
     def __str__(self):
         return f"{self.name} ({self.sku})"
@@ -95,7 +168,54 @@ class Product(models.Model):
             return 'low_stock'
         else:
             return 'in_stock'
-
+    
+    @property
+    def expiry_status(self):
+        """Get expiry status of product"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        if not self.expiry_date:
+            return 'no_expiry'
+        
+        today = timezone.now().date()
+        days_until_expiry = (self.expiry_date - today).days
+        
+        if days_until_expiry < 0:
+            return 'expired'
+        elif days_until_expiry <= 30:
+            return 'expiring_soon'
+        elif days_until_expiry <= 90:
+            return 'expiring'
+        else:
+            return 'valid'
+    
+    @property
+    def expiry_badge(self):
+        """Get HTML badge for expiry status"""
+        status = self.expiry_status
+        if status == 'expired':
+            return '<span class="badge badge-danger">Expired</span>'
+        elif status == 'expiring_soon':
+            return '<span class="badge badge-warning">Expiring Soon</span>'
+        elif status == 'expiring':
+            return '<span class="badge badge-info">Expiring</span>'
+        elif status == 'valid':
+            return '<span class="badge badge-success">Valid</span>'
+        else:
+            return '<span class="badge badge-secondary">No Expiry</span>'
+    
+    @property
+    def days_until_expiry(self):
+        """Get days until expiry"""
+        from django.utils import timezone
+        if not self.expiry_date:
+            return None
+        today = timezone.now().date()
+        return (self.expiry_date - today).days
+    
+    
+    
 class Sale(models.Model):
     invoice_number = models.CharField(max_length=50, unique=True)
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)

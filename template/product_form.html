@@ -1,11 +1,13 @@
+<!-- templates/product_form.html - Updated with expiry fields -->
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ action }} Product{% endblock %}
 
 {% block extra_css %}
 <style>
     .form-container {
-        max-width: 800px;
+        max-width: 900px;
         margin: 0 auto;
     }
     
@@ -43,8 +45,15 @@
         margin-bottom: 1.5rem;
     }
     
+    .form-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
     @media (max-width: 768px) {
-        .form-grid {
+        .form-grid, .form-grid-3 {
             grid-template-columns: 1fr;
         }
     }
@@ -74,10 +83,11 @@
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         margin-bottom: 1.5rem;
+        border-left: 4px solid #dc2626;
     }
     
     .form-section h3 {
-        color: #667eea;
+        color: #dc2626;
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
         border-bottom: 2px solid #f0f0f0;
@@ -104,12 +114,39 @@
         font-size: 0.9rem;
         font-weight: 500;
     }
+    
+    .expiry-warning {
+        background: #fff3cd;
+        color: #856404;
+        padding: 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+    
+    .btn-primary {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #059669;
+    }
+    
+    .btn-success {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #059669;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="form-container">
-    <h1 style="margin-bottom: 2rem;">{{ action }} Product</h1>
+    <h1 style="margin-bottom: 2rem; color: #dc2626;">{{ action }} Product</h1>
 
     <div class="info-box">
         <p>💡 <strong>Note:</strong> All fields are optional. Empty fields will use default values.</p>
@@ -161,6 +198,30 @@
                 <textarea name="description" class="form-control" rows="3"
                           placeholder="Product description (optional)">{{ product.description|default:'' }}</textarea>
             </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>
+                        Location/Shelf 
+                        <span class="optional-badge">optional</span>
+                    </label>
+                    <input type="text" name="location" class="form-control" 
+                           value="{{ product.location|default:'' }}" 
+                           placeholder="e.g., Shelf A1, Rack 2">
+                    <span class="field-hint">Storage location in store</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        Batch Number 
+                        <span class="optional-badge">optional</span>
+                    </label>
+                    <input type="text" name="batch_number" class="form-control" 
+                           value="{{ product.batch_number|default:'' }}" 
+                           placeholder="Batch/Lot number">
+                    <span class="field-hint">Manufacturer batch number</span>
+                </div>
+            </div>
         </div>
         
         <!-- Category and Supplier -->
@@ -210,6 +271,70 @@
             </div>
         </div>
         
+        <!-- Expiry Information - NEW SECTION -->
+        <div class="form-section">
+            <h3>Expiry & Batch Information</h3>
+            
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label>
+                        Manufacturing Date 
+                        <span class="optional-badge">optional</span>
+                    </label>
+                    <input type="date" name="manufacturing_date" class="form-control" 
+                           value="{{ product.manufacturing_date|date:'Y-m-d'|default:'' }}">
+                    <span class="field-hint">Date of manufacture</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        Expiry Date 
+                        <span class="optional-badge">optional</span>
+                    </label>
+                    <input type="date" name="expiry_date" class="form-control" 
+                           value="{{ product.expiry_date|date:'Y-m-d'|default:'' }}"
+                           id="expiryDateInput">
+                    <span class="field-hint">Product expiry date</span>
+                    {% if product and product.expiry_date %}
+                        {% with days=product.days_until_expiry %}
+                            {% if days < 0 %}
+                                <div class="expiry-warning" style="background: #fee2e2; color: #b91c1c;">
+                                    ⚠️ This product has EXPIRED ({{ days|stringformat:"+d" }} days ago)
+                                </div>
+                            {% elif days <= 30 %}
+                                <div class="expiry-warning">
+                                    ⚠️ Expiring SOON! Only {{ days }} days remaining
+                                </div>
+                            {% elif days <= 90 %}
+                                <div class="expiry-warning" style="background: #fff3cd; color: #856404;">
+                                    ⚠️ Expiring in {{ days }} days
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        Batch Number 
+                        <span class="optional-badge">optional</span>
+                    </label>
+                    <input type="text" name="batch_number" class="form-control" 
+                           value="{{ product.batch_number|default:'' }}" 
+                           placeholder="Batch/Lot number">
+                    <span class="field-hint">Manufacturer batch number</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="is_active" value="1" 
+                           {% if product.is_active or not product %}checked{% endif %}>
+                    <span>Product is Active (available for sale)</span>
+                </label>
+            </div>
+        </div>
+        
         <!-- Pricing and Stock -->
         <div class="form-section">
             <h3>Pricing & Stock</h3>
@@ -225,8 +350,7 @@
                            value="{{ product.price|default:'' }}" 
                            placeholder="0.00 (optional)">
                     <span class="field-hint">Defaults to 0.00 if empty</span>
-
-                           </div>
+                </div>
                 
                 <div class="form-group">
                     <label>
@@ -275,7 +399,7 @@
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="image-preview" id="imagePreview">
                 {% else %}
                 <div class="image-placeholder" id="imagePreview">
-                    No image
+                    <img src="{% static 'img/unique_logo.png' %}" alt="Placeholder" style="max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0.3;">
                 </div>
                 {% endif %}
             </div>
@@ -306,10 +430,10 @@
         
         <!-- Form Actions -->
         <div class="form-actions">
-            <button type="submit" class="btn btn-success" id="submitBtn" style="flex: 1;">
+            <button type="submit" class="btn btn-success" id="submitBtn" style="flex: 1; background: #10b981;">
                 {{ action }} Product
             </button>
-            <a href="{% url 'product_list' %}" class="btn btn-danger">
+            <a href="{% url 'product_list' %}" class="btn btn-danger" style="background: #dc2626;">
                 Cancel
             </a>
         </div>
@@ -366,54 +490,32 @@ document.getElementById('newSupplierInput').addEventListener('input', function()
     }
 });
 
-// Remove all validation from form submission
+// Validate expiry date > manufacturing date
 document.getElementById('productForm').addEventListener('submit', function(e) {
-    // NO VALIDATION - allow completely empty form submission
+    const mfgDate = document.querySelector('input[name="manufacturing_date"]').value;
+    const expDate = document.querySelector('input[name="expiry_date"]').value;
     
-    // Get values
-    const name = this.querySelector('input[name="name"]').value.trim();
-    const price = this.querySelector('input[name="price"]').value.trim();
-    const quantity = this.querySelector('input[name="quantity"]').value.trim();
-    const costPrice = this.querySelector('input[name="cost_price"]').value.trim();
-    
-    // If name is completely empty, set it to empty string (backend will handle default)
-    if (!name) {
-        this.querySelector('input[name="name"]').value = '';
+    if (mfgDate && expDate && new Date(expDate) < new Date(mfgDate)) {
+        e.preventDefault();
+        alert('Expiry date cannot be earlier than manufacturing date!');
+        return false;
     }
     
-    // If price is empty, set it to empty string (backend will handle default)
-    if (!price) {
-        this.querySelector('input[name="price"]').value = '';
-    }
-    
-    // If quantity is empty, set it to empty string (backend will handle default)
-    if (!quantity) {
-        this.querySelector('input[name="quantity"]').value = '';
-    }
-    
-    // If cost price is empty, set it to empty string (backend will handle default)
-    if (!costPrice) {
-        this.querySelector('input[name="cost_price"]').value = '';
-    }
-    
-    // Disable submit button to prevent double submission
+    // Disable submit button
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
     submitBtn.innerHTML = 'Processing...';
 });
 
-// Set focus on first field when page loads
 document.addEventListener('DOMContentLoaded', function() {
     const nameInput = document.querySelector('input[name="name"]');
     if (nameInput) {
         nameInput.focus();
     }
     
-    // Reset form to clear any browser validation
     const form = document.getElementById('productForm');
     form.setAttribute('novalidate', 'novalidate');
     
-    // Remove required attributes if they exist
     const requiredInputs = form.querySelectorAll('[required]');
     requiredInputs.forEach(input => {
         input.removeAttribute('required');

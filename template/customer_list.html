@@ -1,0 +1,519 @@
+<!-- templates/customer_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Customers - Unique Rose Beauty Base{% endblock %}
+
+{% block content %}
+<style>
+    .customer-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.8rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        text-align: center;
+        border-left: 4px solid #10b981;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .stat-value {
+        font-size: 2.2rem;
+        font-weight: bold;
+        color: #10b981;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .customer-table-container {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border: 1px solid #fee2e2;
+        overflow: hidden;
+        margin-top: 1.5rem;
+    }
+    
+    .customer-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .customer-table th {
+        background: #dc2626;
+        color: white;
+        padding: 1.2rem 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .customer-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #fee2e2;
+    }
+    
+    .customer-table tr:hover {
+        background: #fff5f5;
+    }
+    
+    .customer-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .type-badge {
+        padding: 0.4rem 1rem;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .type-regular {
+        background: #e2e8f0;
+        color: #475569;
+        border: 1px solid #94a3b8;
+    }
+    
+    .type-vip {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #f59e0b;
+    }
+    
+    .type-wholesale {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+    
+    .status-active {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+    
+    .status-inactive {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #dc2626;
+    }
+    
+    .btn-green {
+        background: #10b981;
+        color: white;
+        padding: 0.5rem 1.2rem;
+        border-radius: 30px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        border: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+    
+    .btn-green:hover {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-red {
+        background: #dc2626;
+        color: white;
+        padding: 0.5rem 1.2rem;
+        border-radius: 30px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        border: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+    
+    .btn-red:hover {
+        background: #b91c1c;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+    
+    .search-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+        border: 1px solid #fee2e2;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .search-input {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        border: 2px solid #fee2e2;
+        border-radius: 40px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+    
+    .search-input:focus {
+        border-color: #10b981;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+    
+    .points-highlight {
+        background: #fef3c7;
+        padding: 0.3rem 0.8rem;
+        border-radius: 30px;
+        font-weight: bold;
+        color: #92400e;
+        display: inline-block;
+        border: 1px solid #f59e0b;
+    }
+    
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .btn-add {
+        background: #10b981;
+        color: white;
+        padding: 0.8rem 2rem;
+        border-radius: 40px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        font-size: 1rem;
+    }
+    
+    .btn-add:hover {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .total-badge {
+        background: #dc2626;
+        color: white;
+        padding: 0.6rem 2rem;
+        border-radius: 40px;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .purchase-history {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    
+    .customer-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #10b981;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .customer-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem;
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #fee2e2;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 40px;
+        border: 1px solid #fee2e2;
+    }
+    
+    .pagination-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid #10b981;
+        background: white;
+        color: #10b981;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .pagination-btn:hover {
+        background: #10b981;
+        color: white;
+    }
+    
+    .pagination-btn.active {
+        background: #10b981;
+        color: white;
+    }
+</style>
+
+<div class="header-actions">
+    <h1 style="color: #dc2626; font-size: 2rem;">Customers</h1>
+    <div class="total-badge">
+        Total: {{ total_customers }}
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="customer-stats">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_customers }}</div>
+        <div class="stat-label">Total Customers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ vip_count }}</div>
+        <div class="stat-label">VIP Customers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ wholesale_count }}</div>
+        <div class="stat-label">Wholesale</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_points }}</div>
+        <div class="stat-label">Loyalty Points</div>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="search-container">
+    <input type="text" 
+           id="customerSearch"
+           class="search-input"
+           placeholder="🔍 Search customers by name, phone, email, or type..."
+           value="{{ search_query|default:'' }}"
+           autofocus>
+</div>
+
+<!-- Customers Table -->
+<div class="customer-table-container">
+    <table class="customer-table">
+        <thead>
+            <tr>
+                <th>Customer</th>
+                <th>Contact</th>
+                <th>Type</th>
+                <th>Points</th>
+                <th>Total Purchases</th>
+                <th>Last Purchase</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="customerTableBody">
+            {% for customer in customers %}
+            <tr data-customer-id="{{ customer.id }}"
+                data-name="{{ customer.name|lower }}"
+                data-phone="{{ customer.phone }}"
+                data-email="{{ customer.email|lower }}"
+                data-type="{{ customer.customer_type }}">
+                <td>
+                    <div class="customer-info">
+                        <div class="customer-avatar">
+                            {{ customer.name|slice:":1"|upper }}
+                        </div>
+                        <div>
+                            <strong style="color: #dc2626;">{{ customer.name }}</strong>
+                            {% if customer.notes %}
+                            <div class="purchase-history" title="{{ customer.notes }}">
+                                📝 {{ customer.notes|truncatechars:30 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div><span style="color: #10b981;">📞</span> {{ customer.phone }}</div>
+                    {% if customer.email %}
+                    <div style="font-size: 0.85rem; color: #6b7280;">✉️ {{ customer.email }}</div>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="type-badge type-{{ customer.customer_type }}">
+                        {{ customer.get_customer_type_display|default:customer.customer_type|title }}
+                    </span>
+                </td>
+                <td>
+                    <span class="points-highlight">{{ customer.loyalty_points }}</span>
+                </td>
+                <td>
+                    <strong>₦{{ customer.total_purchases|floatformat:2 }}</strong>
+                </td>
+                <td>
+                    {% if customer.last_purchase_date %}
+                        <span title="{{ customer.last_purchase_date|date:'M d, Y H:i' }}">
+                            {{ customer.last_purchase_date|date:"M d, Y" }}
+                        </span>
+                        <div class="purchase-history">
+                            {{ customer.last_purchase_date|timesince }} ago
+                        </div>
+                    {% else %}
+                        <span style="color: #9ca3af;">Never</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="type-badge {% if customer.is_active %}status-active{% else %}status-inactive{% endif %}">
+                        {% if customer.is_active %}● Active{% else %}○ Inactive{% endif %}
+                    </span>
+                </td>
+
+                <td>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <!-- Remove the view_customer link -->
+                        <a href="{% url 'edit_customer' customer.id %}" class="btn-green btn-sm">Edit</a>
+                        <button onclick="deleteCustomer({{ customer.id }}, '{{ customer.name|escapejs }}')" 
+                                class="btn-red btn-sm">Delete</button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 4rem;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;">👥</div>
+                    <h3 style="color: #dc2626; margin-bottom: 1rem;">No Customers Yet</h3>
+                    <p style="color: #6b7280; margin-bottom: 2rem;">Customers will appear here when they make purchases at the POS.</p>
+                    <a href="{% url 'home' %}" class="btn-add" style="display: inline-block;">Go to POS</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination (if needed) -->
+{% if customers.paginator.num_pages > 1 %}
+<div class="pagination">
+    {% if customers.has_previous %}
+    <button class="pagination-btn" onclick="changePage({{ customers.previous_page_number }})">← Previous</button>
+    {% endif %}
+    
+    <span style="color: #10b981; font-weight: 600;">
+        Page {{ customers.number }} of {{ customers.paginator.num_pages }}
+    </span>
+    
+    {% if customers.has_next %}
+    <button class="pagination-btn" onclick="changePage({{ customers.next_page_number }})">Next →</button>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+let customerSearchTimeout;
+
+document.getElementById('customerSearch').addEventListener('input', function() {
+    clearTimeout(customerSearchTimeout);
+    const searchTerm = this.value.toLowerCase().trim();
+    
+    customerSearchTimeout = setTimeout(() => {
+        const rows = document.querySelectorAll('#customerTableBody tr[data-customer-id]');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const name = row.dataset.name || '';
+            const phone = row.dataset.phone || '';
+            const email = row.dataset.email || '';
+            const type = row.dataset.type || '';
+            
+            if (name.includes(searchTerm) || 
+                phone.includes(searchTerm) || 
+                email.includes(searchTerm) || 
+                type.includes(searchTerm)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update search count
+        let countElement = document.getElementById('customerSearchCount');
+        if (!countElement) {
+            countElement = document.createElement('div');
+            countElement.id = 'customerSearchCount';
+            countElement.style.cssText = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #10b981; color: white; padding: 0.25rem 1rem; border-radius: 30px; font-size: 0.9rem; font-weight: 600;';
+            document.querySelector('.search-container').style.position = 'relative';
+            document.querySelector('.search-container').appendChild(countElement);
+        }
+        
+        if (visibleCount > 0) {
+            countElement.textContent = `${visibleCount} found`;
+            countElement.style.display = 'block';
+        } else {
+            countElement.style.display = 'none';
+        }
+    }, 300);
+});
+
+function deleteCustomer(customerId, customerName) {
+    showConfirmModal(
+        'Delete Customer',
+        `Are you sure you want to delete customer "${customerName}"? This action cannot be undone.`,
+        async function() {
+            try {
+                const response = await fetch(`/customers/delete/${customerId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                if (response.ok) {
+                    showToast('Customer deleted successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('Failed to delete customer', 'error');
+                }
+            } catch (error) {
+                showToast('Network error', 'error');
+            }
+        }
+    );
+}
+
+function changePage(pageNumber) {
+    const url = new URL(window.location);
+    url.searchParams.set('page', pageNumber);
+    window.location = url;
+}
+</script>
+{% endblock %}

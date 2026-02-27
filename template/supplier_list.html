@@ -1,0 +1,560 @@
+<!-- templates/supplier_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Suppliers - Unique Rose Beauty Base{% endblock %}
+
+{% block content %}
+<style>
+    .supplier-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        text-align: center;
+        border-left: 4px solid #10b981;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #10b981;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .supplier-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .supplier-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        padding: 1.5rem;
+        border-left: 4px solid #dc2626;
+        transition: all 0.3s;
+        border: 1px solid #fee2e2;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .supplier-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(220, 38, 38, 0.15);
+    }
+    
+    .supplier-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, transparent 50%, rgba(220, 38, 38, 0.1) 50%);
+        border-radius: 0 0 0 80px;
+    }
+    
+    .supplier-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        padding-right: 60px;
+    }
+    
+    .supplier-name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #dc2626;
+        margin: 0;
+    }
+    
+    .rating {
+        display: flex;
+        gap: 2px;
+    }
+    
+    .star-filled {
+        color: #fbbf24;
+        font-size: 1.1rem;
+    }
+    
+    .star-empty {
+        color: #e5e7eb;
+        font-size: 1.1rem;
+    }
+    
+    .supplier-contact {
+        margin-bottom: 1rem;
+        padding: 1rem 0;
+        border-top: 1px solid #fee2e2;
+        border-bottom: 1px solid #fee2e2;
+    }
+    
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: #4b5563;
+    }
+    
+    .contact-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .contact-icon {
+        width: 20px;
+        color: #10b981;
+        font-weight: bold;
+    }
+    
+    .supplier-products {
+        margin-bottom: 1rem;
+    }
+    
+    .product-tag {
+        display: inline-block;
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        margin: 0.25rem;
+        border: 1px solid #7dd3fc;
+    }
+    
+    .supplier-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    
+    .stat-item {
+        background: #f8fafc;
+        padding: 0.75rem 0.25rem;
+        border-radius: 10px;
+        border: 1px solid #fee2e2;
+    }
+    
+    .stat-item-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #10b981;
+    }
+    
+    .stat-item-label {
+        font-size: 0.7rem;
+        color: #6b7280;
+        text-transform: uppercase;
+    }
+    
+    .supplier-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #fee2e2;
+    }
+    
+    .status-badge {
+        padding: 0.3rem 1rem;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+    
+    .status-inactive {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-color: #dc2626;
+    }
+    
+    .btn-green {
+        background: #10b981;
+        color: white;
+        padding: 0.5rem 1.2rem;
+        border-radius: 30px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        border: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+    
+    .btn-green:hover {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-red {
+        background: #dc2626;
+        color: white;
+        padding: 0.5rem 1.2rem;
+        border-radius: 30px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        border: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+    
+    .btn-red:hover {
+        background: #b91c1c;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+    
+    .search-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+        border: 1px solid #fee2e2;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .search-input {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        border: 2px solid #fee2e2;
+        border-radius: 40px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+    
+    .search-input:focus {
+        border-color: #10b981;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+    
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .btn-add {
+        background: #10b981;
+        color: white;
+        padding: 0.8rem 2rem;
+        border-radius: 40px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-block;
+        transition: all 0.3s;
+        border: none;
+        font-size: 1rem;
+    }
+    
+    .btn-add:hover {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .total-badge {
+        background: #dc2626;
+        color: white;
+        padding: 0.6rem 2rem;
+        border-radius: 40px;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .product-list {
+        max-height: 100px;
+        overflow-y: auto;
+        padding: 0.5rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state {
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 4rem;
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #fee2e2;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="header-actions">
+    <h1 style="color: #dc2626; font-size: 2rem;">Suppliers</h1>
+    <div class="total-badge">
+        Total: {{ suppliers.count }}
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="supplier-stats">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_suppliers|default:suppliers.count }}</div>
+        <div class="stat-label">Total Suppliers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ total_products|default:"0" }}</div>
+        <div class="stat-label">Total Products</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ avg_rating|default:"0" }}</div>
+        <div class="stat-label">Avg Rating</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ active_suppliers|default:"0" }}</div>
+        <div class="stat-label">Active</div>
+    </div>
+</div>
+
+<!-- Search and Add Bar -->
+<div class="search-container">
+    <input type="text" 
+           id="supplierSearch"
+           class="search-input"
+           placeholder="🔍 Search suppliers by name, contact, phone, email, or products..."
+           value="{{ search_query|default:'' }}"
+           autofocus>
+    <a href="{% url 'add_supplier' %}" class="btn-add">
+        + Add Supplier
+    </a>
+</div>
+
+<!-- Suppliers Grid -->
+<div class="supplier-grid" id="supplierGrid">
+    {% for supplier in suppliers %}
+    <div class="supplier-card" data-supplier-id="{{ supplier.id }}"
+         data-name="{{ supplier.name|lower }}"
+         data-contact="{{ supplier.contact_person|lower }}"
+         data-phone="{{ supplier.phone }}"
+         data-email="{{ supplier.email|lower }}"
+         data-products="{% for product in supplier.product_set.all %}{{ product.name|lower }} {% endfor %}">
+        
+        <div class="supplier-header">
+            <h3 class="supplier-name">{{ supplier.name }}</h3>
+            <div class="rating">
+                {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= supplier.rating %}
+                        <span class="star-filled">★</span>
+                    {% else %}
+                        <span class="star-empty">★</span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="supplier-contact">
+            {% if supplier.contact_person %}
+            <div class="contact-item">
+                <span class="contact-icon">👤</span>
+                <span><strong>Contact:</strong> {{ supplier.contact_person }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="contact-item">
+                <span class="contact-icon">📞</span>
+                <span><strong>Phone:</strong> {{ supplier.phone }}</span>
+            </div>
+            
+            {% if supplier.email %}
+            <div class="contact-item">
+                <span class="contact-icon">✉️</span>
+                <span><strong>Email:</strong> {{ supplier.email }}</span>
+            </div>
+            {% endif %}
+            
+            {% if supplier.website %}
+            <div class="contact-item">
+                <span class="contact-icon">🌐</span>
+                <span><strong>Website:</strong> {{ supplier.website }}</span>
+            </div>
+            {% endif %}
+            
+            {% if supplier.tax_id %}
+            <div class="contact-item">
+                <span class="contact-icon">🏷️</span>
+                <span><strong>Tax ID:</strong> {{ supplier.tax_id }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Products supplied by this supplier -->
+        <div class="supplier-products">
+            <strong style="color: #10b981; display: block; margin-bottom: 0.5rem;">📦 Products Supplied:</strong>
+            <div class="product-list">
+                {% for product in supplier.product_set.all %}
+                <span class="product-tag" title="{{ product.name }}">
+                    {{ product.name|truncatechars:20 }}
+                </span>
+                {% empty %}
+                <span style="color: #9ca3af; font-style: italic; padding: 0.5rem; display: block; text-align: center;">
+                    No products yet
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="supplier-stats-grid">
+            <div class="stat-item">
+                <div class="stat-item-value">{{ supplier.product_set.count }}</div>
+                <div class="stat-item-label">Products</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-item-value">{{ supplier.lead_time_days }}d</div>
+                <div class="stat-item-label">Lead Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-item-value">{{ supplier.payment_terms|default:"COD"|truncatechars:5 }}</div>
+                <div class="stat-item-label">Payment</div>
+            </div>
+        </div>
+        
+        {% if supplier.address %}
+        <div style="margin-bottom: 1rem; padding: 0.5rem; background: #f8fafc; border-radius: 10px; font-size: 0.9rem; color: #4b5563; border: 1px dashed #10b981;">
+            <span style="color: #10b981;">📍</span> {{ supplier.address|truncatechars:60 }}
+        </div>
+        {% endif %}
+        
+        {% if supplier.notes %}
+        <div style="margin-bottom: 1rem; padding: 0.5rem; background: #fef3c7; border-radius: 10px; font-size: 0.9rem; color: #92400e; border-left: 3px solid #f59e0b;">
+            <span>📝</span> {{ supplier.notes|truncatechars:50 }}
+        </div>
+        {% endif %}
+        
+        <div class="supplier-footer">
+            <span class="status-badge {% if not supplier.is_active %}status-inactive{% endif %}">
+                {% if supplier.is_active %}● Active{% else %}○ Inactive{% endif %}
+            </span>
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="{% url 'edit_supplier' supplier.id %}" class="btn-green btn-sm">Edit</a>
+                <button onclick="deleteSupplier({{ supplier.id }}, '{{ supplier.name|escapejs }}')" 
+                        class="btn-red btn-sm">Delete</button>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <div class="empty-state-icon">🏢</div>
+        <h3 style="color: #dc2626; margin-bottom: 1rem;">No Suppliers Yet</h3>
+        <p style="color: #6b7280; margin-bottom: 2rem;">Start by adding your first supplier to the system.</p>
+        <a href="{% url 'add_supplier' %}" class="btn-add" style="display: inline-block;">Add Your First Supplier</a>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+let supplierSearchTimeout;
+
+document.getElementById('supplierSearch').addEventListener('input', function() {
+    clearTimeout(supplierSearchTimeout);
+    const searchTerm = this.value.toLowerCase().trim();
+    
+    supplierSearchTimeout = setTimeout(() => {
+        const cards = document.querySelectorAll('.supplier-card');
+        let visibleCount = 0;
+        
+        cards.forEach(card => {
+            const name = card.dataset.name || '';
+            const contact = card.dataset.contact || '';
+            const phone = card.dataset.phone || '';
+            const email = card.dataset.email || '';
+            const products = card.dataset.products || '';
+            
+            if (name.includes(searchTerm) || 
+                contact.includes(searchTerm) || 
+                phone.includes(searchTerm) || 
+                email.includes(searchTerm) ||
+                products.includes(searchTerm)) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Update search count
+        let countElement = document.getElementById('supplierSearchCount');
+        if (!countElement) {
+            countElement = document.createElement('div');
+            countElement.id = 'supplierSearchCount';
+            countElement.style.cssText = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #10b981; color: white; padding: 0.25rem 1rem; border-radius: 30px; font-size: 0.9rem; font-weight: 600;';
+            document.querySelector('.search-container').style.position = 'relative';
+            document.querySelector('.search-container').appendChild(countElement);
+        }
+        
+        if (visibleCount > 0) {
+            countElement.textContent = `${visibleCount} found`;
+            countElement.style.display = 'block';
+        } else {
+            countElement.style.display = 'none';
+        }
+    }, 300);
+});
+
+function deleteSupplier(supplierId, supplierName) {
+    showConfirmModal(
+        'Delete Supplier',
+        `Are you sure you want to delete supplier "${supplierName}"? This action cannot be undone.`,
+        async function() {
+            try {
+                const response = await fetch(`/suppliers/delete/${supplierId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                if (response.ok) {
+                    showToast('Supplier deleted successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('Failed to delete supplier', 'error');
+                }
+            } catch (error) {
+                showToast('Network error', 'error');
+            }
+        }
+    );
+}
+</script>
+{% endblock %}

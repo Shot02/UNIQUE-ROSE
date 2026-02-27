@@ -105,9 +105,9 @@
     
     .filter-btn {
         padding: 0.75rem 1.5rem;
-        border: 2px solid #667eea;
+        border: 2px solid #48bb78;
         background: white;
-        color: #667eea;
+        color: #48bb78;
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.3s;
@@ -115,12 +115,12 @@
     }
     
     .filter-btn:hover {
-        background: #667eea;
+        background: #48bb78;
         color: white;
     }
     
     .filter-btn.active {
-        background: #667eea;
+        background: #48bb78;
         color: white;
     }
     
@@ -140,7 +140,7 @@
         text-align: center;
         font-size: 1.1rem;
         font-weight: 600;
-        color: #667eea;
+        color: #48bb78;
         margin-top: 1rem;
         padding: 1rem;
         background: #f8f9fa;
@@ -165,7 +165,7 @@
     }
     
     .search-input:focus {
-        border-color: #4f46e5;
+        border-color: #dc2626;
         outline: none;
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     }
@@ -175,7 +175,7 @@
         right: 10px;
         top: 50%;
         transform: translateY(-50%);
-        background: #4f46e5;
+        background: #dc2626;
         color: white;
         padding: 0.25rem 0.75rem;
         border-radius: 12px;
@@ -190,11 +190,11 @@
         padding: 0.5rem;
         background: #f8f9fa;
         border-radius: 6px;
-        border-left: 3px solid #4f46e5;
+        border-left: 3px solid #dc2626;
     }
     
     .revenue-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
         color: white;
         padding: 2rem;
         border-radius: 12px;
@@ -251,7 +251,7 @@
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
     <h1>Admin Dashboard</h1>
-    <div style="font-size: 1.1rem; color: #667eea; font-weight: 600;">
+    <div style="font-size: 1.1rem; color: #b91c1c; font-weight: 600;">
         {% if date_filter == 'today' %}
             Today's Report
         {% elif date_filter == 'week' %}
@@ -378,6 +378,76 @@
     </div>
 </div>
 
+<!-- Expiry Alerts Section -->
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="color: #dc2626;">Product Expiry Alerts</h2>
+        <div>
+            <span class="badge badge-danger" style="background: #dc2626;">{{ expired_count|default:0 }} Expired</span>
+            <span class="badge badge-warning">{{ expiring_soon_count|default:0 }} Expiring Soon</span>
+        </div>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>SKU</th>
+                    <th>Supplier</th>
+                    <th>Batch</th>
+                    <th>Expiry Date</th>
+                    <th>Days Left</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in expired %}
+                <tr style="background: #fee2e2;">
+                    <td><strong>{{ product.name }}</strong></td>
+                    <td><code>{{ product.sku }}</code></td>
+                    <td>{{ product.supplier.name|default:"-" }}</td>
+                    <td>{{ product.batch_number|default:"-" }}</td>
+                    <td>{{ product.expiry_date|date:"d/m/Y" }}</td>
+                    <td><span class="badge badge-danger">{{ product.days_until_expiry }} days</span></td>
+                    <td>{{ product.quantity }}</td>
+                    <td><span class="badge badge-danger">EXPIRED</span></td>
+                    <td>
+                        <a href="{% url 'edit_product' product.id %}" class="btn btn-warning btn-sm">Review</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                
+                {% for product in expiring_soon %}
+                <tr style="background: #fef3c7;">
+                    <td><strong>{{ product.name }}</strong></td>
+                    <td><code>{{ product.sku }}</code></td>
+                    <td>{{ product.supplier.name|default:"-" }}</td>
+                    <td>{{ product.batch_number|default:"-" }}</td>
+                    <td>{{ product.expiry_date|date:"d/m/Y" }}</td>
+                    <td><span class="badge badge-warning">{{ product.days_until_expiry }} days</span></td>
+                    <td>{{ product.quantity }}</td>
+                    <td><span class="badge badge-warning">Expiring Soon</span></td>
+                    <td>
+                        <a href="{% url 'edit_product' product.id %}" class="btn btn-primary btn-sm">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                
+                {% if not expired and not expiring_soon %}
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 2rem;">
+                        <div style="color: #10b981;">✅ All products have valid expiry dates</div>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <!-- Total Revenue Card -->
 <div class="revenue-card">
     <h2>Total Revenue ({{ date_filter|title }})</h2>
@@ -386,6 +456,9 @@
         Actual payments received
     </div>
 </div>
+
+
+
 
 <!-- Profit Analysis Section -->
 <div class="profit-section" style="margin-bottom: 2rem;">

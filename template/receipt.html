@@ -35,11 +35,11 @@
         text-align: center;
         margin-bottom: 2rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid #667eea;
+        border-bottom: 2px solid #48bb78;
     }
     
     .receipt-header h1 {
-        color: #667eea;
+        color: #dc2626;
         margin-bottom: 0.5rem;
         font-size: 2rem;
     }
@@ -78,7 +78,7 @@
     }
     
     .receipt-table th {
-        background: #667eea;
+        background: #dc2626;
         color: white;
         padding: 1rem;
         text-align: left;
@@ -110,7 +110,7 @@
     .summary-row.total {
         font-size: 1.5rem;
         font-weight: bold;
-        color: #667eea;
+        color: #dc2626;
         border-top: 2px solid #ddd;
         padding-top: 1rem;
         margin-top: 1rem;
@@ -160,8 +160,8 @@
 {% block content %}
 <div class="receipt-container">
     <div class="receipt-header">
-        <h1>A.A ASHIRU ENTERPRIISES SAKI</h1>
-        <h2>HOME OF QUALITY ENGINEERING KITS</h2>
+        <h1>UNIQUE ROSE</h1>
+        <h2>BEAUTY BASE </h2>
         <h2>SALES RECEIPT</h2>
         <p style="font-size: 1.2rem;"><strong>Invoice: {{ sale.invoice_number }}</strong></p>
     </div>
@@ -171,7 +171,7 @@
             <h3>Customer Information</h3>
             <p><strong>Name:</strong> {{ sale.customer_name|default:"-" }}</p>
             <p><strong>Phone:</strong> {{ sale.customer_phone|default:"-" }}</p>
-            <p><strong>Payment Status:</strong> 
+            <p><strong>Payment Status:</strong>     
                 <span class="payment-status status-{{ sale.payment_status }}">
                     {{ sale.payment_status|title }}
                 </span>
@@ -239,7 +239,7 @@
             <span>₦{{ sale.amount_paid|floatformat:2 }}</span>
         </div>
         {% if sale.balance > 0 %}
-        <div class="summary-row" style="color: #dc3545;">
+        <div class="summary-row" style="color: #dc3545">
             <span><strong>Balance Due:</strong></span>
             <span><strong>₦{{ sale.balance|floatformat:2 }}</strong></span>
         </div>
@@ -248,7 +248,8 @@
     
     <div class="receipt-footer">
         <p>Thank you for your business!</p>
-        <p>For inquiries, please contact: +234 XXX XXX XXXX</p>
+        <p>For inquiries, please contact: +234-8143858715</p>
+        <p> +234-9136806243, +234-7039146358</p>
     </div>
     
     <div class="action-buttons no-print">
