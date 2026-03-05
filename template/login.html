@@ -6,168 +6,209 @@
 
 {% block content %}
 <style>
-    .login-container {
-        max-width: 900px;  /* Increased from 500px to 900px for wider layout */
-        margin: 2rem auto;
-        padding: 0 20px;
-    }
-    
-    .login-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;  /* Two-column layout */
-        gap: 2rem;
-        align-items: stretch;
-    }
-    
-    /* Left Column - Login Form */
-    .login-card {
-        background: white;
-        padding: 2.5rem 2rem;
-        border-radius: 24px;
-        box-shadow: 0 20px 40px rgba(220, 38, 38, 0.15);
-        border-top: 6px solid #dc2626;
+    /* Full width header - outside container */
+    .login-header-wrapper {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        padding: 1.5rem 0;
+        margin: -20px -20px 30px -20px; /* Extend beyond container padding */
+        box-shadow: 0 8px 16px rgba(220, 38, 38, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         position: relative;
-        overflow: hidden;
-        height: 100%;
+        z-index: 10;
+    }
+    
+    .login-header-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 40px;
         display: flex;
-        flex-direction: column;
+        align-items: center;
+        gap: 3rem;
     }
     
-    .login-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 6px;
-        background: linear-gradient(90deg, #dc2626, #10b981, #dc2626);
-        animation: gradient 3s ease infinite;
-        background-size: 200% 200%;
-    }
-    
-    @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    
-    .login-header {
-        text-align: center;
-        margin-bottom: 1.5rem;
-        position: relative;
-    }
-    
-    /* RECTANGULAR LOGO - Matching base template style */
-    .login-logo {
-        width: 100%;
-        max-width: 280px;     /* Wider to accommodate rectangular shape */
-        height: auto;         /* Auto height maintains aspect ratio */
-        object-fit: contain;  /* Ensure full logo visible */
-        margin: 0 auto 1.5rem;
-        border-radius: 16px;  /* Slightly rounded corners like nav logo */
-        border: 3px solid #dc2626;
-        padding: 12px 20px;   /* More horizontal padding for rectangle */
+    /* Rectangular logo - bigger for header */
+    .login-header-logo {
+        height: 120px;
+        width: auto;
+        max-width: 350px;
+        object-fit: contain;
+        border-radius: 16px;
         background: white;
-        box-shadow: 0 8px 20px rgba(220, 38, 38, 0.25);
+        padding: 15px 30px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.25);
         transition: transform 0.3s;
-        display: block;
     }
     
-    .login-logo:hover {
+    .login-header-logo:hover {
         transform: scale(1.02);
     }
     
-    .login-header h2 {
-        color: #dc2626;
-        font-size: 2.2rem;
-        margin-bottom: 0.3rem;
-        font-weight: 800;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    }
-    
-    .login-header h3 {
-        color: #10b981;
-        font-size: 1.3rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-    
-    .login-header p {
-        color: #6b7280;
-        font-size: 1rem;
-        font-weight: 500;
-    }
-    
-    /* Right Column - Business Info */
-    .business-info-card {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    .login-header-text {
         color: white;
-        padding: 2.5rem 2rem;
-        border-radius: 24px;
-        box-shadow: 0 20px 40px rgba(220, 38, 38, 0.25);
-        position: relative;
-        overflow: hidden;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
     }
     
-    .business-info-card::after {
-        content: '❤️';
-        position: absolute;
-        bottom: -20px;
-        right: -20px;
-        font-size: 150px;
-        opacity: 0.1;
-        transform: rotate(15deg);
-        pointer-events: none;
-    }
-    
-    .business-info-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 6px;
-        background: linear-gradient(90deg, #10b981, #dc2626, #10b981);
-        animation: gradient 3s ease infinite;
-        background-size: 200% 200%;
-    }
-    
-    .business-header {
-        text-align: center;
-        margin-bottom: 2rem;
-        position: relative;
-        z-index: 1;
-    }
-    
-    .business-header h3 {
-        font-size: 2rem;
+    .login-header-text h1 {
+        font-size: 3rem;
         font-weight: 800;
-        margin-bottom: 0.5rem;
-        text-transform: uppercase;
         letter-spacing: 2px;
-        border-bottom: 2px solid rgba(255,255,255,0.2);
-        padding-bottom: 1rem;
+        margin-bottom: 0.3rem;
+        line-height: 1.2;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
     
-    .business-header p {
-        font-size: 1.1rem;
+    .login-header-text h2 {
+        font-size: 2rem;
+        font-weight: 600;
         opacity: 0.95;
+        margin-bottom: 0.5rem;
+        color: #10b981;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    .login-header-text p {
+        font-size: 1.2rem;
+        opacity: 0.9;
         font-style: italic;
     }
     
-    .contact-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        margin: 1.5rem 0;
+    /* Main content - wider login section */
+    .login-main-wrapper {
+        max-width: 800px;  /* Increased from 600px */
+        margin: 0 auto 40px auto;
+        padding: 0 20px;
+    }
+    
+    .login-section {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        padding: 3rem;
+        border: 1px solid rgba(220, 38, 38, 0.15);
+        border-top: 6px solid #10b981;
+        transition: all 0.3s;
+    }
+    
+    .login-section:hover {
+        box-shadow: 0 24px 48px rgba(16, 185, 129, 0.15);
+    }
+    
+    .welcome-message {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        color: #059669;
+        font-weight: 600;
+        font-size: 1.3rem;
+        background: #f0fdf4;
+        padding: 1.2rem;
+        border-radius: 50px;
+        border: 2px solid #10b981;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-group {
+        margin-bottom: 2rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.8rem;
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 1.2rem 1.5rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+        background: #f9fafb;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.15);
+        background: white;
+    }
+    
+    .form-control:hover {
+        border-color: #10b981;
+    }
+    
+    .btn-login {
+        background: #10b981;
+        color: white;
+        width: 100%;
+        padding: 1.2rem;
+        font-size: 1.3rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+        margin-top: 1.5rem;
+    }
+    
+    .btn-login:hover {
+        background: #059669;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(16, 185, 129, 0.4);
+    }
+    
+    .btn-login:active {
+        transform: translateY(-2px);
+    }
+    
+    /* Full width footer */
+    .login-footer-wrapper {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        padding: 2.5rem 0;
+        margin: 30px -20px -20px -20px; /* Extend beyond container padding */
+        box-shadow: 0 -8px 16px rgba(220, 38, 38, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
         position: relative;
-        z-index: 1;
+        z-index: 10;
+    }
+    
+    .login-footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 40px;
+        color: white;
+    }
+    
+    .footer-slogan {
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid rgba(255,255,255,0.2);
+        letter-spacing: 2px;
+        color: #10b981;
+        text-transform: uppercase;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .footer-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 3rem;
+        margin-bottom: 2rem;
+    }
+    
+    .footer-contact {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
     }
     
     .contact-item {
@@ -178,7 +219,7 @@
         padding: 1rem 1.5rem;
         border-radius: 50px;
         transition: all 0.3s;
-        border: 1px solid rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.2);
         backdrop-filter: blur(5px);
     }
     
@@ -190,266 +231,223 @@
     
     .contact-icon {
         font-size: 1.5rem;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         min-width: 40px;
         text-align: center;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
     
-    .contact-detail {
+    .contact-text {
         font-size: 1.1rem;
         font-weight: 500;
-        word-break: break-word;
     }
     
-    .address-box {
+    .footer-address {
         background: rgba(255,255,255,0.15);
-        padding: 1.5rem;
+        padding: 1.8rem;
         border-radius: 30px;
-        margin: 1.5rem 0;
-        text-align: center;
         border: 1px solid rgba(255,255,255,0.2);
-        position: relative;
-        z-index: 1;
         backdrop-filter: blur(5px);
+        height: fit-content;
     }
     
-    .address-box strong {
+    .footer-address strong {
         display: block;
-        margin-bottom: 0.8rem;
-        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
         color: #10b981;
         text-transform: uppercase;
         letter-spacing: 1px;
     }
     
-    .address-box p {
-        font-size: 1.1rem;
-        line-height: 1.6;
+    .footer-address p {
+        font-size: 1.2rem;
+        line-height: 1.8;
         font-weight: 500;
     }
     
-    .slogan {
-        background: rgba(16, 185, 129, 0.2);
-        border: 2px solid #10b981;
-        color: white;
-        padding: 1rem;
-        border-radius: 40px;
-        font-weight: 700;
-        font-size: 1.1rem;
+    .footer-copyright {
         text-align: center;
-        margin: 1rem 0;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        position: relative;
-        z-index: 1;
-        backdrop-filter: blur(5px);
-    }
-    
-    .copyright {
-        margin-top: auto;
-        font-size: 0.9rem;
+        font-size: 1rem;
         opacity: 0.9;
-        text-align: center;
-        padding-top: 1.5rem;
-        border-top: 1px solid rgba(255,255,255,0.2);
-        position: relative;
-        z-index: 1;
+        padding-top: 2rem;
+        margin-top: 1rem;
+        border-top: 2px solid rgba(255,255,255,0.2);
     }
     
-    .copyright small {
+    .footer-copyright small {
         display: block;
-        margin-top: 0.3rem;
+        margin-top: 0.5rem;
         opacity: 0.8;
         font-style: italic;
-    }
-    
-    .btn-login {
-        background: #10b981;
-        color: white;
-        width: 100%;
-        padding: 1rem 1.5rem;
-        font-size: 1.2rem;
-        font-weight: 700;
-        border: none;
-        border-radius: 40px;
-        cursor: pointer;
-        transition: all 0.3s;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        margin-top: 1rem;
-    }
-    
-    .btn-login:hover {
-        background: #059669;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-    }
-    
-    .btn-login:active {
-        transform: translateY(-1px);
-    }
-    
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-group label {
-        display: block;
-        margin-bottom: 0.6rem;
-        font-weight: 600;
-        color: #374151;
         font-size: 0.95rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
     
-    .form-control {
-        width: 100%;
-        padding: 1rem 1.2rem;
-        border: 2px solid #e5e7eb;
-        border-radius: 40px;
-        font-size: 1rem;
-        transition: all 0.3s;
-        background: #f9fafb;
-    }
-    
-    .form-control:focus {
-        outline: none;
-        border-color: #10b981;
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
-        background: white;
-    }
-    
-    .form-control:hover {
-        border-color: #10b981;
-    }
-    
-    .welcome-text {
-        text-align: center;
-        margin-bottom: 1.5rem;
-        color: #059669;
-        font-weight: 600;
-        font-size: 1.1rem;
-        background: #f0fdf4;
-        padding: 0.8rem 1rem;
-        border-radius: 40px;
-        border: 1px solid #10b981;
-    }
-    
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .login-grid {
-            grid-template-columns: 1fr;  /* Stack on mobile */
-            gap: 1.5rem;
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .login-header-content {
+            padding: 0 20px;
         }
         
-        .login-container {
-            max-width: 500px;
+        .login-header-text h1 {
+            font-size: 2.5rem;
         }
         
-        .login-logo {
-            max-width: 240px;
-        }
-        
-        .business-header h3 {
+        .login-header-text h2 {
             font-size: 1.8rem;
         }
         
-        .contact-item {
-            padding: 0.8rem 1.2rem;
+        .footer-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
         }
         
-        .contact-detail {
-            font-size: 1rem;
+        .footer-contact {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
     
-    @media (min-width: 1400px) {
-        .login-container {
-            max-width: 1100px;  /* Even wider on large screens */
+    @media (max-width: 768px) {
+        .login-header-wrapper {
+            margin: -20px -20px 20px -20px;
+        }
+        
+        .login-header-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 1.5rem;
+            padding: 20px;
+        }
+        
+        .login-header-text {
+            text-align: center;
+        }
+        
+        .login-header-text h1 {
+            font-size: 2rem;
+        }
+        
+        .login-header-text h2 {
+            font-size: 1.5rem;
+        }
+        
+        .login-header-logo {
+            height: 90px;
+            max-width: 280px;
+        }
+        
+        .login-main-wrapper {
+            max-width: 100%;
+        }
+        
+        .login-section {
+            padding: 2rem;
+        }
+        
+        .footer-contact {
+            grid-template-columns: 1fr;
+        }
+        
+        .footer-slogan {
+            font-size: 1.4rem;
+        }
+    }
+    
+    @media (min-width: 1600px) {
+        .login-header-content,
+        .login-footer-content {
+            max-width: 1600px;
+        }
+        
+        .login-main-wrapper {
+            max-width: 900px;
         }
     }
 </style>
 
-<div class="login-container">
-    <div class="login-grid">
-        <!-- Left Column - Login Form -->
-        <div class="login-card">
-            <div class="login-header">
-                <!-- RECTANGULAR LOGO - Fully visible, wide format -->
-                <img src="{% static 'img/unique_logo.png' %}" 
-                     alt="Unique Rose Beauty Base Logo" 
-                     class="login-logo"
-                     style="width: 100%; max-width: 320px; height: auto; object-fit: contain;">
-                <h2>UNIQUE ROSE</h2>
-                <h3>Beauty Base</h3>
-                <p>Inventory Management System</p>
-            </div>
-            
-            <div class="welcome-text">
-                👋 Welcome back! Please login to continue
-            </div>
-            
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>👤 Username</label>
-                    <input type="text" name="username" class="form-control" 
-                           placeholder="Enter your username" required autofocus>
-                </div>
-                
-                <div class="form-group">
-                    <label>🔒 Password</label>
-                    <input type="password" name="password" class="form-control" 
-                           placeholder="Enter your password" required>
-                </div>
-                
-                <button type="submit" class="btn-login">
-                    🔐 Login to Dashboard
-                </button>
-            </form>
+<!-- Full Width Header -->
+<div class="login-header-wrapper">
+    <div class="login-header-content">
+        <img src="{% static 'img/unique_logo.png' %}" 
+             alt="Unique Rose Beauty Base Logo" 
+             class="login-header-logo">
+        <div class="login-header-text">
+            <h1>UNIQUE ROSE</h1>
+            <h2>Beauty Base</h2>
+            <p>Inventory Management System</p>
+        </div>
+    </div>
+</div>
+
+<!-- Wider Login Section -->
+<div class="login-main-wrapper">
+    <div class="login-section">
+        <div class="welcome-message">
+            👋 Welcome back! Please login to continue
         </div>
         
-        <!-- Right Column - Business Information -->
-        <div class="business-info-card">
-            <div class="business-header">
-                <h3>UNIQUE ROSE</h3>
-                <p>Beauty Base</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>👤 Username</label>
+                <input type="text" name="username" class="form-control" 
+                       placeholder="Enter your username" required autofocus>
             </div>
             
-            <div class="slogan">
-                🏆 HOME OF QUALITY ENGINEERING KITS & BEAUTY PRODUCTS
+            <div class="form-group">
+                <label>🔒 Password</label>
+                <input type="password" name="password" class="form-control" 
+                       placeholder="Enter your password" required>
             </div>
             
-            <div class="contact-grid">
+            <button type="submit" class="btn-login">
+                🔐 Login to Dashboard
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Full Width Footer -->
+<div class="login-footer-wrapper">
+    <div class="login-footer-content">
+        <div class="footer-slogan">
+            🏆 HOME OF QUALITY ENGINEERING KITS & BEAUTY PRODUCTS
+        </div>
+        
+        <div class="footer-grid">
+            <!-- Contact Information -->
+            <div class="footer-contact">
                 <div class="contact-item">
                     <span class="contact-icon">📍</span>
-                    <span class="contact-detail">Opposite Bamigbade House, Ajegunle Road, Saki</span>
+                    <span class="contact-text">Opposite Bamigbade House, Ajegunle Road, Saki</span>
                 </div>
                 <div class="contact-item">
                     <span class="contact-icon">📞</span>
-                    <span class="contact-detail">0814 385 8715</span>
+                    <span class="contact-text">0814 385 8715</span>
                 </div>
                 <div class="contact-item">
                     <span class="contact-icon">📞</span>
-                    <span class="contact-detail">0913 680 6243</span>
+                    <span class="contact-text">0913 680 6243</span>
                 </div>
                 <div class="contact-item">
                     <span class="contact-icon">📞</span>
-                    <span class="contact-detail">0703 914 6358</span>
+                    <span class="contact-text">0703 914 6358</span>
                 </div>
             </div>
             
-            <div class="address-box">
-                <strong>📍 Visit Our Store</strong>
-                <p>Opposite Bamigbade House<br>Ajegunle Road, Saki<br>Oyo State, Nigeria</p>
+            <!-- Address -->
+            <div class="footer-address">
+                <strong>Visit Our Store</strong>
+                <p>
+                    Opposite Bamigbade House<br>
+                    Ajegunle Road, Saki<br>
+                    Oyo State, Nigeria
+                </p>
             </div>
-            
-            <div class="copyright">
-                &copy; {% now "Y" %} Unique Rose Beauty Base. 
-                <small>Version 2.0 | Powered by Django | All rights reserved.</small>
-            </div>
+        </div>
+        
+        <div class="footer-copyright">
+            © {% now "Y" %} Unique Rose Beauty Base. All rights reserved.
+            <small>Version 2.0 | Powered by Django</small>
         </div>
     </div>
 </div>

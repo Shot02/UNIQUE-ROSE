@@ -172,25 +172,22 @@ def process_sale(request):
                     customer_type='regular'
                 )
             
-            # Calculate with Decimal for precision
+            # ========== SIMPLIFIED DISCOUNT CALCULATION ==========
+            # Calculate subtotal (price × quantity for all items)
             subtotal = Decimal('0')
+            item_discounts_total = Decimal('0')
+            
             for item in data['items']:
                 item_price = Decimal(str(item['price'])).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                 item_quantity = Decimal(str(item['quantity']))
                 item_discount = Decimal(str(item.get('discount', 0))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-                subtotal += (item_price * item_quantity) - item_discount
+                
+                subtotal += (item_price * item_quantity)
+                item_discounts_total += item_discount
             
-            # Calculate total discount
-            item_discounts_total = Decimal('0')
-            for item in data['items']:
-                item_discounts_total += Decimal(str(item.get('discount', 0))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            # Total = subtotal - item discounts only (NO global discount)
+            total = (subtotal - item_discounts_total).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             
-            if 'discount' in data:
-                sale_discount = Decimal(str(data.get('discount', 0))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-            else:
-                sale_discount = item_discounts_total
-            
-            total = (subtotal - sale_discount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             amount_paid = Decimal(str(data.get('amount_paid', 0))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             balance = (total - amount_paid).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             
@@ -222,14 +219,14 @@ def process_sale(request):
             else:
                 payment_status = 'unpaid'
             
-            # Create sale with Decimal values
+            # Create sale with Decimal values - discount is just item discounts total
             sale = Sale.objects.create(
                 invoice_number=invoice_number,
                 staff=request.user,
                 customer_name=customer_name,
                 customer_phone=customer_phone,
                 subtotal=subtotal,
-                discount=sale_discount,
+                discount=item_discounts_total,  # Only item discounts
                 total=total,
                 amount_paid=amount_paid,
                 balance=balance,
@@ -338,9 +335,8 @@ def view_receipt(request, sale_id):
     items = sale.items.all()
     payments = sale.payments.all()
     
-    # Calculate total item discounts
+    # Calculate total item discounts from the items
     item_discounts_total = sum(item.discount for item in items)
-    total_discount = item_discounts_total + sale.discount
     
     # Get payment method from latest payment
     payment_method = payments.last().payment_method if payments.exists() else 'cash'
@@ -351,7 +347,7 @@ def view_receipt(request, sale_id):
         'payments': payments,
         'payment_method': payment_method,
         'item_discounts_total': item_discounts_total,
-        'total_discount': total_discount,  # Total of all discounts
+        # No separate sale discount
     }
     return render(request, 'receipt.html', context)
 
